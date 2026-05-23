@@ -1,4 +1,5 @@
 import { AppTabbar } from "@/components/app-tabbar";
+import { GlobalPingToast } from "@/components/global-ping-toast";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -8,6 +9,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       <div className="mx-auto w-full max-w-[480px]">
         <AppTabbar />
       </div>
+      <GlobalPingToast />
     </div>
   );
 }
