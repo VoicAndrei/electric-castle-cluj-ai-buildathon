@@ -2,7 +2,7 @@ import { readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import matter from "gray-matter";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { embed } from "@/lib/embeddings";
+import { embedMany } from "@/lib/embeddings";
 import { chunkText } from "@/lib/chunking";
 
 type Lineup = Array<{
@@ -13,46 +13,12 @@ type Lineup = Array<{
   genres: string[];
 }>;
 
-async function ingestMarkdown(filePath: string, supabase: ReturnType<typeof createAdminClient>) {
-  const raw = readFileSync(filePath, "utf-8");
-  const { data: fm, content } = matter(raw);
-  const lang = (fm.lang as string) ?? "en";
-  const tags = (fm.tags as string[]) ?? [];
-  const source_doc = filePath.split("/").pop()!;
-
-  const chunks = chunkText(content, { maxTokens: 500, overlap: 100 });
-  console.log(`Ingesting ${source_doc}: ${chunks.length} chunks`);
-
-  for (const chunk of chunks) {
-    const vector = await embed(chunk);
-    const { error } = await supabase.from("kb_chunks").insert({
-      source_doc,
-      text: chunk,
-      embedding: Array.from(vector),
-      lang,
-      tags,
-    });
-    if (error) throw error;
-  }
-}
-
-async function ingestLineup(filePath: string, supabase: ReturnType<typeof createAdminClient>) {
-  const raw: Lineup = JSON.parse(readFileSync(filePath, "utf-8"));
-  console.log(`Ingesting lineup: ${raw.length} artists`);
-
-  for (const a of raw) {
-    const text = `${a.artist} plays at ${a.stage} on ${a.day}. EC tags: ${a.ec_tags.join(", ")}. Genres: ${a.genres.join(", ")}.`;
-    const vector = await embed(text);
-    const { error } = await supabase.from("kb_chunks").insert({
-      source_doc: "lineup.json",
-      text,
-      embedding: Array.from(vector),
-      lang: "en",
-      tags: ["lineup", "artist", ...a.ec_tags],
-    });
-    if (error) throw error;
-  }
-}
+type PendingRow = {
+  source_doc: string;
+  text: string;
+  lang: string;
+  tags: string[];
+};
 
 async function main() {
   const supabase = createAdminClient();
@@ -64,13 +30,54 @@ async function main() {
   const ingestDir = join(process.cwd(), "docs/ingest");
   const files = readdirSync(ingestDir);
 
+  // Collect ALL rows first; embed in ONE batched Voyage call to respect 3 RPM free tier.
+  const pending: PendingRow[] = [];
+
   for (const file of files) {
     const path = join(ingestDir, file);
+
     if (file.endsWith(".md")) {
-      await ingestMarkdown(path, supabase);
+      const raw = readFileSync(path, "utf-8");
+      const { data: fm, content } = matter(raw);
+      const lang = (fm.lang as string) ?? "en";
+      const tags = (fm.tags as string[]) ?? [];
+      const source_doc = file;
+
+      const chunks = chunkText(content, { maxTokens: 500, overlap: 100 });
+      console.log(`Queued ${source_doc}: ${chunks.length} chunks`);
+
+      for (const chunk of chunks) {
+        pending.push({ source_doc, text: chunk, lang, tags });
+      }
     } else if (file === "lineup.json") {
-      await ingestLineup(path, supabase);
+      const raw: Lineup = JSON.parse(readFileSync(path, "utf-8"));
+      console.log(`Queued lineup: ${raw.length} artists`);
+
+      for (const a of raw) {
+        const text = `${a.artist} plays at ${a.stage} on ${a.day}. EC tags: ${a.ec_tags.join(", ")}. Genres: ${a.genres.join(", ")}.`;
+        pending.push({
+          source_doc: "lineup.json",
+          text,
+          lang: "en",
+          tags: ["lineup", "artist", ...a.ec_tags],
+        });
+      }
     }
+  }
+
+  console.log(`Embedding ${pending.length} chunks via Cohere...`);
+  const vectors = await embedMany(pending.map((r) => r.text));
+
+  console.log("Inserting into Supabase...");
+  for (let i = 0; i < pending.length; i++) {
+    const { error } = await supabase.from("kb_chunks").insert({
+      source_doc: pending[i].source_doc,
+      text: pending[i].text,
+      embedding: Array.from(vectors[i]),
+      lang: pending[i].lang,
+      tags: pending[i].tags,
+    });
+    if (error) throw error;
   }
 
   const { count } = await supabase

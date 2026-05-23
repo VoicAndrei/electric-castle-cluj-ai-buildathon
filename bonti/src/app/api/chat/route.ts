@@ -1,7 +1,6 @@
 import { streamText, generateText, type ModelMessage } from "ai";
 import { BONTI_LLM, FALLBACK_MODELS, getOpenRouterFor } from "@/lib/openrouter";
 import { rewriteForRetrieval } from "@/lib/retrieval/rewrite";
-import { generateHydeAnswer } from "@/lib/retrieval/hyde";
 import { hybridRetrieve } from "@/lib/retrieval/hybrid";
 import { buildBontiSystemPrompt } from "@/lib/prompts/bonti-system";
 import type { ChatMessage, Lang } from "@/types/chat";
@@ -52,18 +51,18 @@ export async function POST(req: Request) {
   const history: ChatMessage[] = messages.slice(0, -1);
   const lang: Lang = body.lang ?? detectLang(latest.content);
 
-  const standalone = await rewriteForRetrieval({
-    history,
-    message: latest.content,
-    generateText: llmCompletion,
-  });
+  // Adaptive pipeline: only rewrite when there's chat history to disambiguate.
+  // HyDE is overkill for our small KB; embed the rewritten/raw query directly.
+  const queryForRetrieval =
+    history.length > 0
+      ? await rewriteForRetrieval({
+          history,
+          message: latest.content,
+          generateText: llmCompletion,
+        })
+      : latest.content;
 
-  const hypo = await generateHydeAnswer({
-    question: standalone,
-    generateText: llmCompletion,
-  });
-
-  const chunks = await hybridRetrieve(hypo, { lang, k: 5 });
+  const chunks = await hybridRetrieve(queryForRetrieval, { lang, k: 5 });
 
   const systemPrompt = buildBontiSystemPrompt({
     retrievedChunks: chunks,
