@@ -1,4 +1,4 @@
-import { create, type StoreApi } from "zustand";
+import { create, type StoreApi, type UseBoundStore } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import {
   MARIA, FRIENDS, SEEDED_PINGS, type Persona, type SeededPing,
@@ -25,7 +25,7 @@ export type FestivalState = {
   reset: () => void;
 };
 
-export type FestivalStoreApi = StoreApi<FestivalState>;
+export type FestivalStoreApi = UseBoundStore<StoreApi<FestivalState>>;
 
 const seed = (): Pick<FestivalState, "maria" | "friends" | "pings"> => ({
   maria: { ...MARIA },
