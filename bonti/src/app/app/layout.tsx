@@ -1,5 +1,6 @@
 import { AppTabbar } from "@/components/app-tabbar";
 import { GlobalPingToast } from "@/components/global-ping-toast";
+import { BontiChatFAB } from "@/components/bonti-chat-fab";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -10,6 +11,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         <AppTabbar />
       </div>
       <GlobalPingToast />
+      <BontiChatFAB />
     </div>
   );
 }
