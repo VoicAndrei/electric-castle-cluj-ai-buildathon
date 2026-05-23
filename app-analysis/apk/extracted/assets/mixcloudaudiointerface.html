@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Appmiral Mixcloud Audio Interface</title>
+</head>
+<body>
+<center>
+    <h1>Appmiral Mixcloud Audio Interface</h1>
+    <button id="playTrack">Play Stream 1</button>
+    <br><br>
+    <button id="playTrack2">Play Stream 2</button>
+    <br><br>
+    <button id="playTrack3">Play Stream 3</button>
+    <br><br>
+    <button id="toggleplay">Toggle Play</button>
+    <br><br>
+    <button id="resume">Resume</button>
+    <br><br>
+    <button id="pause">Pause</button>
+    <br><br>
+    <button id="seek">Seek</button>
+    <br><br>
+    <label id="position"></label>
+    <progress id="progress" max="100" value="0"></progress>
+    <label id="duration"></label>
+    <p>
+        <b><label id="track"></label></b>
+        <br>
+        <label id="artist"></label>
+    </p>
+    <img id="image" src="data:," style="width:200px;height:200px;">
+    <br><br>
+    <br><br>
+</center>
+
+<script src="https://widget.mixcloud.com/media/js/widgetApi.js" type="text/javascript"></script>
+<iframe allow="autoplay" frameborder="0" height="60" id="mixcloud-iframe"
+        onload="iframeLoadedListener(this)"
+        src="https://www.mixcloud.com/widget/iframe/?hide_cover=1&mini=1&light=1&hide_artwork=1&autoplay=1&feed=%2Fadambeyer%2Fdcr603-drumcode-radio-live-adam-beyer-live-from-circoloco-dc-10-ibiza%2F"
+        width="100%"></iframe>
+
+<script type="text/javascript">
+
+    let currentKey = null;
+    let imageUrl = 'data:,';
+    let streamKey = null;
+    let streamTitle = null;
+    let artistName = null;
+    let currentPosition = 0;
+    let trackDuration = 0;
+    let isPaused = true;
+
+
+    /*
+     Initialize the playback session
+     */
+
+    // Create the player
+    var mixcloudPlayer = Mixcloud.PlayerWidget(document.getElementById("mixcloud-iframe"));;
+
+
+    /*
+     Playback Controls
+     */
+
+    function togglePlay() {
+        mixcloudPlayer.togglePlay();
+    }
+
+    function resume() {
+        mixcloudPlayer.play();
+    }
+
+    function pause() {
+        mixcloudPlayer.pause();
+    }
+
+    function previousTrack() {
+        // Mixcloud is always only 1 stream, so previous track isn't supported
+    }
+
+    function nextTrack() {
+        // Mixcloud is always only 1 stream, so next track isn't supported
+    }
+
+    function seek(position) {
+        mixcloudPlayer.seek(position).then(() => {});
+    }
+
+    function stop() {
+        pause();
+    }
+
+
+    /*
+     Play Content
+     */
+
+    function playTrack(key) {
+        currentKey = key;
+        if (mixcloudPlayer) {
+            stop();
+            disableListeners();
+        }
+
+        // Replace the iframe src instead of using the widget's load function
+        // The widget's load function has a bug where trying to play a stream that has already been played screws up the internal state
+        let src = 'https://www.mixcloud.com/widget/iframe/?hide_cover=1&mini=1&light=1&hide_artwork=1&autoplay=1&feed=' + key.replaceAll("/", "%2F");
+        document.getElementById('mixcloud-iframe').setAttribute('src', src);
+    }
+
+
+    /*
+     Listeners
+     */
+
+    function iframeLoadedListener() {
+        if (currentKey) {
+            getStreamInformation(currentKey).then(data => {
+                parseData(currentKey, data);
+                updatePlayerState();
+
+                setTimeout(function() {
+                    enableListeners();
+                    resume();
+
+                    postMessage({
+                        type: 'should_start_playing',
+                        service: 'mixcloud'
+                    });
+                }, 250);
+            });
+        } else {
+            postMessage({
+                    type: 'player_ready',
+                    service: 'mixcloud'
+            });
+        }
+    };
+
+    function enableListeners() {
+        mixcloudPlayer.events.play.on(playListener);
+        mixcloudPlayer.events.pause.on(pauseListener);
+        mixcloudPlayer.events.progress.on(progressListener);
+        mixcloudPlayer.events.error.on(errorListener);
+    }
+
+    function disableListeners() {
+        mixcloudPlayer.events.play.off(playListener);
+        mixcloudPlayer.events.pause.off(pauseListener);
+        mixcloudPlayer.events.progress.off(progressListener);
+        mixcloudPlayer.events.error.off(errorListener);
+    }
+
+    function playListener() {
+        isPaused = false;
+        updatePlayerState();
+    }
+
+    function pauseListener() {
+        isPaused = true;
+        updatePlayerState();
+    }
+
+    function progressListener(position, duration) {
+        currentPosition = position;
+        trackDuration = duration;
+        updatePlayerState();
+    }
+
+    function errorListener(error) {
+        // What to do in case of error
+    }
+
+
+    /*
+     Helpers
+     */
+
+    // Get Mixcloud stream information
+    async function getStreamInformation(key) {
+        let response = await fetch('https://api.mixcloud.com' + key);
+        let data = await response.json();
+        return data;
+    }
+
+    function updatePlayerState() {
+        var messageData = {
+            type: 'player_state_update',
+            service: 'mixcloud',
+            paused: isPaused,
+            position: currentPosition,
+            duration: trackDuration,
+            artist_name: artistName,
+            track_name: streamTitle,
+            track_uri: streamKey,
+            image: imageUrl
+        };
+
+        var pos = Math.floor(currentPosition);
+        var dur = Math.floor(trackDuration);
+
+        document.getElementById("position").innerHTML = formatTime(pos);
+        document.getElementById("duration").innerHTML = formatTime(dur);
+        document.getElementById('progress').setAttribute('value', pos);
+        document.getElementById('progress').setAttribute('max', dur);
+
+        document.getElementById("track").innerHTML = streamTitle;
+        document.getElementById("artist").innerHTML = artistName;
+        document.getElementById('image').setAttribute('src', imageUrl);
+
+        postMessage(messageData);
+    }
+
+    function parseData(key, data) {
+        streamKey = null;
+        imageUrl = 'data:,';
+        streamTitle = null;
+        artistName = null;
+        currentPosition = 0;
+        trackDuration = 0;
+        isPaused = true;
+
+        streamTitle = data.name;
+        trackDuration = data.audio_length;
+
+        if (data.user) {
+            artistName = data.user.name;
+        }
+
+        if (data.pictures) {
+            var pictures = data.pictures;
+            if ('1024wx1024h' in pictures) {
+                imageUrl = pictures['1024wx1024h'];
+            } else if ('768wx768h' in pictures) {
+                imageUrl = pictures['768wx768h'];
+            } else if ('640wx640h' in pictures) {
+                imageUrl = pictures['640wx640h'];
+            } else if ('extra_large' in pictures) {
+                imageUrl = pictures['extra_large'];
+            } else if ('320wx320h' in pictures) {
+                imageUrl = pictures['320wx320h'];
+            }
+        }
+    }
+
+    function formatTime(seconds) {
+        var hour = Math.floor(seconds / 3600);
+        var min = Math.floor((seconds - (hour * 3600))  / 60);
+        var sec = seconds - (hour * 3600) - (min * 60);
+
+        if (hour > 0) {
+            return hour + ':' + String(min).padStart(2, '0') + ':' + String(sec).padStart(2, '0');
+        } else {
+            return min + ':' + String(sec).padStart(2, '0');
+        }
+    }
+
+    // Send a message to the native client
+    function postMessage(dict) {
+        if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.AudioInterface) {
+            window.webkit.messageHandlers.AudioInterface.postMessage(dict);
+        }
+        if (window.appInterface != undefined) {
+           window.appInterface.postMessage(JSON.stringify(dict));
+        }
+    }
+
+
+    /*
+     Testing
+     */
+
+    document.getElementById('playTrack').onclick = function() {
+        playTrack('/adambeyer/dcr602-drumcode-radio-live-monika-kruse-studio-mix-from-fuerteventura-spain/');
+    };
+    document.getElementById('playTrack2').onclick = function() {
+        playTrack('/robinschulz/robin-schulz-sugar-radio-356/');
+    };
+    document.getElementById('playTrack3').onclick = function() {
+        playTrack('/MelanieCOfficial/melanie-c-summer-fest-mix/');
+    };
+    document.getElementById('toggleplay').onclick = function() {
+        togglePlay();
+    };
+    document.getElementById('resume').onclick = function() {
+        resume();
+    };
+    document.getElementById('pause').onclick = function() {
+        pause();
+    };
+    document.getElementById('seek').onclick = function() {
+        seek(900);
+    };
+
+</script>
+</body>
+</html>

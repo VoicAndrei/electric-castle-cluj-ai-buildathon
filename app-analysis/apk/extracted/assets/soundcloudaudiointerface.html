@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Appmiral Soundcloud Audio Interface</title>
+</head>
+<body>
+<center>
+    <h1>Appmiral Soundcloud Audio Interface</h1>
+    <button id="playTrack">Play One Track</button>
+    <br><br>
+    <button id="playPlaylist">Play Playlist</button>
+    <br><br>
+    <button id="toggleplay">Toggle Play</button>
+    <br><br>
+    <button id="resume">Resume</button>
+    <br><br>
+    <button id="pause">Pause</button>
+    <br><br>
+    <button id="previous">Previous</button>
+    <br><br>
+    <button id="next">Next</button>
+    <br><br>
+    <button id="seek">Seek to 1:00</button>
+    <br><br>
+    <label id="position"></label>
+    <progress id="progress" max="100" value="0"></progress>
+    <label id="duration"></label>
+    <p>
+        <b><label id="track"></label></b>
+        <br>
+        <label id="artist"></label>
+    </p>
+    <img id="image" src="data:," style="width:200px;height:200px;">
+    <br><br>
+    <br><br>
+</center>
+
+<script src="https://w.soundcloud.com/player/api.js" type="text/javascript"></script>
+<iframe allow="autoplay" frameborder="no" height="300" id="soundcloud-iframe" scrolling="no"
+        src="https://w.soundcloud.com/player/?url=https%3A//api.soundcloud.com/tracks/1290035335&color=%23f1f0ef&auto_play=false&hide_related=true&show_teaser=false"
+        title="testje"
+        width="100%"></iframe>
+
+</body>
+<script>
+
+    let currentType = null;
+    let imageUrl = null;
+    let contentId = null;
+    let streamTitle = null;
+    let artistName = null;
+    let currentPosition = 0;
+    let trackDuration = 0;
+    let isPaused = true;
+
+
+    /*
+     Initialize the playback session
+     */
+
+    // Create the player
+    var soundcloudPlayer = SC.Widget(document.getElementById("soundcloud-iframe"));
+    soundcloudPlayer.bind(SC.Widget.Events.READY, function() {
+        console.log('Soundcloud Widget Ready');
+        postMessage({
+                        type: 'player_ready',
+                        service: 'soundcloud'
+                    });
+    });
+    soundcloudPlayer.bind(SC.Widget.Events.PLAY, function(audioData) {
+        playListener();
+    });
+    soundcloudPlayer.bind(SC.Widget.Events.PAUSE, function(audioData) {
+        pauseListener();
+    });
+    soundcloudPlayer.bind(SC.Widget.Events.PLAY_PROGRESS, function(audioData) {
+        progressListener(audioData.currentPosition);
+    });
+    soundcloudPlayer.bind(SC.Widget.Events.FINISH, function(audioData) {
+        endListener();
+    });
+
+
+    /*
+     Playback Controls
+     */
+
+    function togglePlay() {
+        soundcloudPlayer.toggle();
+    }
+
+    function resume() {
+        soundcloudPlayer.play();
+    }
+
+    function pause() {
+        soundcloudPlayer.pause();
+    }
+
+    function previousTrack() {
+        if (currentType == 'playlist') {
+            soundcloudPlayer.prev();
+            soundcloudPlayer.getCurrentSound(function(currentSound) {
+                parseData(currentSound);
+                updatePlayerState();
+            });
+        }
+    }
+
+    function nextTrack() {
+        if (currentType == 'playlist') {
+            soundcloudPlayer.next();
+            soundcloudPlayer.getCurrentSound(function(currentSound) {
+                parseData(currentSound);
+                updatePlayerState();
+            });
+        }
+    }
+
+    function seek(position) {
+        soundcloudPlayer.seekTo((position * 1000));
+    }
+
+    function stop() {
+        pause();
+    }
+
+
+    /*
+     Play Content
+     */
+
+    function playTrack(trackId) {
+        var url = `https://api.soundcloud.com/tracks/${trackId}?show_teaser=false`
+        soundcloudPlayer.load(url, {
+            auto_play: true,
+            callback: function() {
+                currentType = 'track';
+
+                soundcloudPlayer.getCurrentSound(function(currentSound) {
+                    parseData(currentSound);
+                    seek(0);
+
+                    postMessage({
+                        type: 'should_start_playing',
+                        service: 'soundcloud'
+                    });
+                });
+            }
+        });
+    }
+
+    function playPlaylist(playlistId) {
+        var url = `https://api.soundcloud.com/playlists/${playlistId}?show_teaser=false`
+        soundcloudPlayer.load(url, {
+            auto_play: true,
+            callback: function() {
+                currentType = 'playlist';
+
+                soundcloudPlayer.getCurrentSound(function(currentSound) {
+                    parseData(currentSound);
+                    seek(0);
+
+                    postMessage({
+                        type: 'should_start_playing',
+                        service: 'soundcloud'
+                    });
+                });
+            }
+        });
+    }
+
+
+    /*
+     Listeners
+     */
+
+     function playListener() {
+        isPaused = false;
+        updatePlayerState();
+    }
+
+    function pauseListener() {
+        isPaused = true;
+        updatePlayerState();
+    }
+
+    function progressListener(position) {
+        newPosition = Math.round(position / 1000);
+        if (newPosition !== currentPosition) {
+            currentPosition = newPosition;
+            updatePlayerState();
+        }
+    }
+
+    function endListener() {
+        // What to do in case of finished
+    }
+
+    function errorListener(error) {
+        // What to do in case of error
+    }
+
+
+    /*
+     Helpers
+     */
+
+    function updatePlayerState() {
+        var messageData = {
+            type: 'player_state_update',
+            service: 'soundcloud',
+            paused: isPaused,
+            position: currentPosition,
+            duration: trackDuration,
+            artist_name: artistName,
+            track_name: streamTitle,
+            image: imageUrl
+        };
+
+        if (currentType == 'track') {
+            messageData['track_uri'] = `tracks/${contentId}`
+        } else if (currentType == 'playlist') {
+            messageData['track_uri'] = `playlists/${contentId}`
+        }
+
+        var pos = Math.floor(currentPosition);
+        var dur = Math.floor(trackDuration);
+        var image = imageUrl != null ? imageUrl : 'data:,';
+
+        document.getElementById("position").innerHTML = formatTime(pos);
+        document.getElementById("duration").innerHTML = formatTime(dur);
+        document.getElementById('progress').setAttribute('value', pos);
+        document.getElementById('progress').setAttribute('max', dur);
+
+        document.getElementById("track").innerHTML = streamTitle;
+        document.getElementById("artist").innerHTML = artistName;
+        document.getElementById('image').setAttribute('src', image);
+
+        postMessage(messageData);
+    }
+
+    function parseData(data) {
+        imageUrl = data.artwork_url;
+        streamTitle = data.title;
+        artistName = data.user.username;
+        currentPosition = 0;
+        trackDuration = (data.duration / 1000);
+        isPaused = true;
+
+        if (imageUrl.includes('-large.')) {
+            imageUrl = imageUrl.replace('-large.', '-t500x500.');
+        }
+    }
+
+    function formatTime(seconds) {
+        var hour = Math.floor(seconds / 3600);
+        var min = Math.floor((seconds - (hour * 3600))  / 60);
+        var sec = seconds - (hour * 3600) - (min * 60);
+
+        if (hour > 0) {
+            return hour + ':' + String(min).padStart(2, '0') + ':' + String(sec).padStart(2, '0');
+        } else {
+            return min + ':' + String(sec).padStart(2, '0');
+        }
+    }
+
+    // Send a message to the native client
+    function postMessage(dict) {
+        if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.AudioInterface) {
+            window.webkit.messageHandlers.AudioInterface.postMessage(dict);
+        }
+        if (window.appInterface != undefined) {
+           window.appInterface.postMessage(JSON.stringify(dict));
+        }
+    }
+
+
+    /*
+     Testing
+     */
+
+    document.getElementById('playTrack').onclick = function() {
+        playTrack('1290035335');
+    };
+    document.getElementById('playPlaylist').onclick = function() {
+        playPlaylist('334671843');
+    };
+    document.getElementById('toggleplay').onclick = function() {
+        togglePlay();
+    };
+    document.getElementById('resume').onclick = function() {
+        resume();
+    };
+    document.getElementById('pause').onclick = function() {
+        pause();
+    };
+    document.getElementById('previous').onclick = function() {
+        previousTrack();
+    };
+    document.getElementById('next').onclick = function() {
+        nextTrack();
+    };
+    document.getElementById('seek').onclick = function() {
+        seek(60);
+    };
+
+</script>
+</body>
+</html>

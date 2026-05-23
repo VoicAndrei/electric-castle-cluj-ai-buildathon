@@ -1,0 +1,105 @@
+@font-face {font-family: 'SofiaSans-Medium';src: url('fonts/SofiaSans-Medium.ttf');}@font-face {font-family: 'SofiaSans-Bold';src: url('fonts/SofiaSans-Bold.ttf');}@font-face {font-family: 'Roboto-Bold';src: url('fonts/Roboto-Bold.ttf');}@font-face {font-family: 'SofiaSans-Black';src: url('fonts/SofiaSans-Black.ttf');}@font-face {font-family: 'Roboto-Regular';src: url('fonts/Roboto-Regular.ttf');}@font-face {font-family: 'SofiaSans-Regular';src: url('fonts/SofiaSans-Regular.ttf');}:root {
+	--font-scale: 1;
+}
+@font-face {
+	font-family: 'SofiaSans-Medium';
+	src: url('fonts/SofiaSans-Medium.ttf');
+}
+@font-face {
+	font-family: 'SofiaSans-Regular';
+	src: url('fonts/SofiaSans-Regular.ttf');
+}
+@font-face {
+	font-family: 'Roboto-Regular';
+	src: url('fonts/Roboto-Regular.ttf');
+}
+@font-face {
+	font-family: 'SofiaSans-Bold';
+	src: url('fonts/SofiaSans-Bold.ttf');
+}
+body {
+	background-color: rgba(244, 244, 244, 1);
+	padding: 16px;
+	margin: 0;
+}
+a {
+	color: rgba(235, 0, 0, 1);
+	line-height: 1.25;
+	text-transform: none;
+	font-family: 'SofiaSans-Medium';
+	font-style: normal;
+	font-size: calc(16px * var(--font-scale));
+	text-decoration: underline;
+}
+ul {
+	color: rgba(0, 0, 0, 1);
+	line-height: 1.25;
+	text-transform: none;
+	font-family: 'SofiaSans-Regular';
+	font-style: normal;
+	font-size: calc(16px * var(--font-scale));
+}
+p {
+	color: rgba(0, 0, 0, 1);
+	line-height: 1.25;
+	text-transform: none;
+	font-family: 'Roboto-Regular';
+	font-style: normal;
+	font-size: calc(16px * var(--font-scale));
+}
+body {
+	color: rgba(0, 0, 0, 1);
+	line-height: 1.25;
+	text-transform: none;
+	font-family: 'Roboto-Regular';
+	font-style: normal;
+	font-size: calc(16px * var(--font-scale));
+}
+h5 {
+	color: rgba(0, 0, 0, 1);
+	line-height: 1;
+	text-transform: uppercase;
+	font-family: 'SofiaSans-Bold';
+	font-style: bold;
+	font-size: calc(14px * var(--font-scale));
+}
+h4 {
+	color: rgba(0, 0, 0, 1);
+	line-height: 1;
+	text-transform: uppercase;
+	font-family: 'SofiaSans-Bold';
+	font-style: bold;
+	font-size: calc(16px * var(--font-scale));
+}
+h3 {
+	color: rgba(0, 0, 0, 1);
+	line-height: 1;
+	text-transform: uppercase;
+	font-family: 'SofiaSans-Bold';
+	font-style: bold;
+	font-size: calc(18px * var(--font-scale));
+}
+h2 {
+	color: rgba(0, 0, 0, 1);
+	line-height: 1;
+	text-transform: uppercase;
+	font-family: 'SofiaSans-Bold';
+	font-style: bold;
+	font-size: calc(18px * var(--font-scale));
+}
+h1 {
+	color: rgba(0, 0, 0, 1);
+	line-height: 1.43;
+	text-transform: uppercase;
+	font-family: 'SofiaSans-Bold';
+	font-style: bold;
+	font-size: calc(28px * var(--font-scale));
+}
+.button {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 100%;
+	height: 44px;
+	text-decoration: none;
+}

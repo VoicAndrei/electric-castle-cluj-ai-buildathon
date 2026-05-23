@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:tools="http://schemas.android.com/tools"
+    tools:keep="@Layout/hms_download_progress,@drawable/screen_off,@layout/upsdk*,@layout/ins_*,@string/insider_*"
+    tools:shrinkMode="strict" />

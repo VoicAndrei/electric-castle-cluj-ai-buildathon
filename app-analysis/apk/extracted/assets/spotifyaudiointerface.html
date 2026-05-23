@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Appmiral Spotify Audio Interface</title>
+</head>
+<body>
+<center>
+    <h1>Appmiral Spotify Audio Interface</h1>
+    <button id="playTrack">Play One Track</button>
+    <br><br>
+    <button id="playTracks">Play Multiple Tracks</button>
+    <br><br>
+    <button id="playPlaylist">Play Playlist</button>
+    <br><br>
+    <button id="playArtist">Play Artist</button>
+    <br><br>
+    <button id="playAlbum">Play Album</button>
+    <br><br>
+    <button id="toggleplay">Toggle Play</button>
+    <br><br>
+    <button id="resume">Resume</button>
+    <br><br>
+    <button id="pause">Pause</button>
+    <br><br>
+    <button id="previous">Previous</button>
+    <br><br>
+    <button id="next">Next</button>
+    <br><br>
+    <button id="seek">Seek to 1:00</button>
+    <br><br>
+    <label id="position"></label>
+    <progress id="progress" max="100" value="0"></progress>
+    <label id="duration"></label>
+    <p>
+        <b><label id="track"></label></b>
+        <br>
+        <label id="artist"></label>
+    </p>
+    <img id="image" src="data:," style="width:200px;height:200px;">
+</center>
+
+<script src="https://sdk.scdn.co/spotify-player.js"></script>
+<script>
+
+    let accessToken = null;
+    let tokenCallback = null;
+
+    let deviceId = null;
+    let spotifyPlayer = null;
+
+    let timerId = null;
+    let timerInterval = 500;
+
+    let retryCount = 0;
+    let MAX_RETRIES = 5;
+
+
+    /*
+     Initialize the playback session
+     */
+
+    window.onSpotifyWebPlaybackSDKReady = () => {
+        retryCount = 0;
+
+        // Create the player
+        spotifyPlayer = new Spotify.Player({
+            name: '{{PLAYER_NAME}}',
+            getOAuthToken: cb => {
+                tokenCallback = cb;
+                refreshToken();
+            },
+            volume: 1.0
+        });
+
+        // Ready
+        spotifyPlayer.addListener('ready', ({ device_id }) => {
+            console.log('Ready with Device ID', device_id);
+            deviceId = device_id;
+
+            var messageData = {
+                type: 'player_online',
+                device_id: deviceId
+            };
+            postMessage(messageData);
+        });
+
+        // Not Ready
+        spotifyPlayer.addListener('not_ready', ({ device_id }) => {
+            console.log('Device ID has gone offline', device_id);
+            deviceId = null;
+
+            var messageData = {
+                type: 'player_offline',
+                device_id: deviceId
+            };
+            postMessage(messageData);
+        });
+
+        spotifyPlayer.addListener('initialization_error', ({ message }) => {
+            console.error(message);
+            var messageData = {
+                type: 'initialization_error',
+                message: message
+            };
+            postMessage(messageData);
+        });
+
+        spotifyPlayer.addListener('authentication_error', ({ message }) => {
+            console.error(message);
+            var messageData = {
+                type: 'authentication_error',
+                message: message
+            };
+            postMessage(messageData);
+        });
+
+        spotifyPlayer.addListener('account_error', ({ message }) => {
+            console.error(message);
+            var messageData = {
+                type: 'account_error',
+                message: message
+            };
+            postMessage(messageData);
+        });
+        spotifyPlayer.addListener('playback_error', ({ message }) => {
+            console.error(message);
+            var messageData = {
+                type: 'playback_error',
+                message: message
+            };
+            postMessage(messageData);
+        });
+
+        spotifyPlayer.addListener('player_state_changed', ( state => {
+            updatePlayerState(state);
+        }));
+
+        spotifyPlayer.connect();
+    }
+
+    /*
+    Authentication handling
+    */
+    function setAccessToken(token) {
+        console.log('setOAuthToken()', token);
+        if(tokenCallback) {
+            accessToken = token;
+            tokenCallback(token);
+            tokenCallback = null;
+        } else {
+            accessToken = token;
+        }
+    }
+
+    function refreshToken() {
+        if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.AudioInterface) {
+            window.webkit.messageHandlers.AudioInterface.refreshToken();
+        }
+        if (window.appInterface != undefined) {
+           window.appInterface.refreshToken();
+        }
+    }
+
+
+    /*
+     Playback Controls
+     */
+
+    function togglePlay() {
+        spotifyPlayer.activateElement();
+        spotifyPlayer.togglePlay();
+    }
+
+    function resume() {
+        spotifyPlayer.activateElement();
+        spotifyPlayer.resume();
+    }
+
+    function pause() {
+        stopTimer();
+        spotifyPlayer.activateElement();
+        spotifyPlayer.pause();
+    }
+
+    function previousTrack() {
+        stopTimer();
+        spotifyPlayer.activateElement();
+        spotifyPlayer.previousTrack();
+    }
+
+    function nextTrack() {
+        stopTimer();
+        spotifyPlayer.activateElement();
+        spotifyPlayer.nextTrack();
+    }
+
+    function seek(position) {
+        spotifyPlayer.seek(position).then(() => {});
+    }
+
+    function stop() {
+        stopTimer();
+        spotifyPlayer.pause();
+        spotifyPlayer.disconnect();
+    }
+
+
+    /*
+     Play Content
+     */
+
+    function playTrack(trackId) {
+        spotifyPlayer.activateElement();
+
+        uris = [`spotify:track:${trackId}`];
+
+        fetch(`https://api.spotify.com/v1/me/player/play?device_id=${deviceId}`, {
+            method: 'PUT',
+            body: JSON.stringify({ uris: uris }),
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${accessToken}`
+            },
+        });
+    }
+
+    function playTracks(trackIds, offset) {
+        spotifyPlayer.activateElement();
+
+        uris = [];
+        for (let i = 0; i < trackIds.length; i++) {
+            uris.push(`spotify:track:${trackIds[i]}`);
+        }
+
+
+        fetch(`https://api.spotify.com/v1/me/player/play?device_id=${deviceId}`, {
+            method: 'PUT',
+            body: JSON.stringify({ uris: uris, offset: { position: offset } }),
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${accessToken}`
+            },
+        }).then((response) => {
+            // If response status code is 404, Device ID not found, retry up to 5 times with 1 sec delay
+            if (retryCount < MAX_RETRIES && (response.status == 404 || response.status == 502 || response.status == 503)) {
+                // Retry up to 5 times
+                 retryCount++;
+                 console.log('Retry #' + retryCount + '. Response: ');
+
+                setTimeout(function() {
+                    playTracks(trackIds, offset);
+                }, 500);
+            }
+        });
+    }
+
+    function playPlaylist(playlistId) {
+        spotifyPlayer.activateElement();
+
+        uri = `spotify:playlist:${playlistId}`;
+
+        fetch(`https://api.spotify.com/v1/me/player/play?device_id=${deviceId}`, {
+            method: 'PUT',
+            body: JSON.stringify({ context_uri: uri }),
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${accessToken}`
+            },
+        });
+    }
+
+    function playArtist(artistId) {
+        spotifyPlayer.activateElement();
+
+        uri = `spotify:artist:${artistId}`;
+
+        fetch(`https://api.spotify.com/v1/me/player/play?device_id=${deviceId}`, {
+            method: 'PUT',
+            body: JSON.stringify({ context_uri: uri }),
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${accessToken}`
+            },
+        });
+    }
+
+    function playAlbum(albumId) {
+        spotifyPlayer.activateElement();
+
+        uri = `spotify:album:${albumId}`;
+
+        fetch(`https://api.spotify.com/v1/me/player/play?device_id=${deviceId}`, {
+            method: 'PUT',
+            body: JSON.stringify({ context_uri: uri }),
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${accessToken}`
+            },
+        });
+    }
+
+
+    /*
+     Helpers
+     */
+
+    function updatePlayerState(state) {
+        if (!state) {
+            console.error('User is not playing music through the Web Playback SDK');
+            stopTimer();
+
+            document.getElementById('progress').setAttribute('value', 0);
+            document.getElementById('progress').setAttribute('max', 100);
+            document.getElementById('image').setAttribute('src', 'data:,');
+            document.getElementById("position").innerHTML = '';
+            document.getElementById("duration").innerHTML = '';
+            document.getElementById("artist").innerHTML = '';
+            document.getElementById("track").innerHTML = '';
+            return;
+        }
+
+        console.log(state);
+
+        if (state.paused) {
+            stopTimer();
+        } else if (!timerId) {
+            startTimer();
+        }
+
+        var messageData = {
+            type: 'player_state_update',
+            service: 'spotify',
+            paused: state.paused,
+            position: state.position,
+            duration: state.duration,
+            artist_name: null,
+            track_name: null,
+            track_uri: null
+        };
+
+        var pos = Math.floor(state.position / 1000);
+        var dur = Math.floor(state.duration / 1000);
+
+        document.getElementById("position").innerHTML = formatTime(pos);
+        document.getElementById("duration").innerHTML = formatTime(dur);
+        document.getElementById('progress').setAttribute('value', pos);
+        document.getElementById('progress').setAttribute('max', dur);
+
+        var artistName = null;
+        var trackName =  null;
+
+        var currentTrack = state.track_window.current_track;
+        if (currentTrack) {
+            trackName = getTrackName(currentTrack);
+            artistName = getArtistName(currentTrack);
+            imageUrl = getAlbumImage(currentTrack);
+
+            messageData.track_name = trackName;
+            messageData.track_uri = currentTrack.id;
+            messageData.artist_name = artistName;
+            messageData.image = imageUrl;
+
+            document.getElementById("track").innerHTML = trackName;
+            document.getElementById("artist").innerHTML = artistName;
+            document.getElementById('image').setAttribute('src', imageUrl);
+        }
+
+        postMessage(messageData);
+    }
+
+    function getArtistName(track) {
+        //return track.artists[0].name;
+        var names = [];
+        for (let i = 0; i < track.artists.length; i++) {
+            names.push(track.artists[i].name);
+        }
+
+        return names.join(', ');
+    }
+
+    function getTrackName(track) {
+        return track.name;
+    }
+
+    function getAlbumImage(track) {
+        if (track.album) {
+            for (let i = 0; i < track.album.images.length; i++) {
+                var img = track.album.images[i];
+                if (img.size == 'LARGE') {
+                    return img.url;
+                }
+            }
+        }
+
+        return 'data:,';
+    }
+
+    function formatTime(seconds) {
+        var hour = Math.floor(seconds / 3600);
+        var min = Math.floor((seconds - (hour * 3600))  / 60);
+        var sec = seconds - (hour * 3600) - (min * 60);
+
+        if (hour > 0) {
+            return hour + ':' + String(min).padStart(2, '0') + ':' + String(sec).padStart(2, '0');
+        } else {
+            return min + ':' + String(sec).padStart(2, '0');
+        }
+    }
+
+    function startTimer() {
+        if (timerId) {
+            return;
+        }
+
+        timerId = setInterval(() => {
+            spotifyPlayer.getCurrentState().then(state => {
+                updatePlayerState(state);
+            });
+        }, (timerInterval));
+    }
+
+    function stopTimer() {
+        if (timerId) {
+            clearInterval(timerId);
+            timerId = null;
+        }
+    }
+
+    // Send a message to the native client
+    function postMessage(dict) {
+        if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.AudioInterface) {
+            window.webkit.messageHandlers.AudioInterface.postMessage(dict);
+        }
+        if (window.appInterface != undefined) {
+           window.appInterface.postMessage(JSON.stringify(dict));
+        }
+    }
+
+
+    /*
+     Testing
+     */
+
+    document.getElementById('playTrack').onclick = function() {
+        playTrack('61lqNlVRnWYiR9C7BDJw2l');
+    };
+    document.getElementById('playTracks').onclick = function() {
+        playTracks([
+            '422W85SVHQVHwPwUTSowmR',
+            '1YxLxQ8QCGsrtSLuQzpSUz',
+            '7nFKFcmWf2l7WTyK0g9MHX',
+            '4dRCBNhhgxu43VYWEDECbj',
+            '2TWLN4BJqA7jmWvIfrsIM1'
+        ], 0);
+    };
+    document.getElementById('playPlaylist').onclick = function() {
+        playPlaylist('0s8Gdey5aDKJz82ZlUeMe8');
+    };
+    document.getElementById('playArtist').onclick = function() {
+        playArtist('6M2wZ9GZgrQXHCFfjv46we');
+    };
+    document.getElementById('playAlbum').onclick = function() {
+        playAlbum('5hDu0EcgRbvdq4VdO60H1f');
+    };
+    document.getElementById('toggleplay').onclick = function() {
+        togglePlay();
+    };
+    document.getElementById('resume').onclick = function() {
+        resume();
+    };
+    document.getElementById('pause').onclick = function() {
+        pause();
+    };
+    document.getElementById('previous').onclick = function() {
+        previousTrack();
+    };
+    document.getElementById('next').onclick = function() {
+        nextTrack();
+    };
+    document.getElementById('seek').onclick = function() {
+        seek(60000);
+    };
+
+</script>
+</body>
+</html>
