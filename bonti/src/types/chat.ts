@@ -1,4 +1,5 @@
 export type Lang = "en" | "ro";
+export type Mode = "pre_ticket" | "in_festival";
 
 export type ChatMessage = {
   role: "user" | "assistant" | "system";

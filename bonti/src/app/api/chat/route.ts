@@ -2,14 +2,18 @@ import { generateText, type ModelMessage } from "ai";
 import { BONTI_LLM, FALLBACK_MODELS, getOpenRouterFor } from "@/lib/openrouter";
 import { rewriteForRetrieval } from "@/lib/retrieval/rewrite";
 import { hybridRetrieve } from "@/lib/retrieval/hybrid";
-import { buildBontiSystemPrompt } from "@/lib/prompts/bonti-system";
-import type { ChatMessage, Lang } from "@/types/chat";
+import {
+  buildBontiSystemPrompt,
+  buildBontiInFestivalSystemPrompt,
+} from "@/lib/prompts/bonti-system";
+import type { ChatMessage, Lang, Mode } from "@/types/chat";
 
 export const runtime = "nodejs";
 
 type Body = {
   messages: ChatMessage[];
   lang?: Lang;
+  mode?: Mode;
 };
 
 function detectLang(text: string): Lang {
@@ -50,6 +54,7 @@ export async function POST(req: Request) {
   }
   const history: ChatMessage[] = messages.slice(0, -1);
   const lang: Lang = body.lang ?? detectLang(latest.content);
+  const mode: Mode = body.mode ?? "pre_ticket";
 
   // Adaptive pipeline: only rewrite when there's chat history to disambiguate.
   // HyDE is overkill for our small KB; embed the rewritten/raw query directly.
@@ -64,10 +69,10 @@ export async function POST(req: Request) {
 
   const chunks = await hybridRetrieve(queryForRetrieval, { lang, k: 5 });
 
-  const systemPrompt = buildBontiSystemPrompt({
-    retrievedChunks: chunks,
-    lang,
-  });
+  const systemPrompt =
+    mode === "in_festival"
+      ? buildBontiInFestivalSystemPrompt({ retrievedChunks: chunks, lang })
+      : buildBontiSystemPrompt({ retrievedChunks: chunks, lang });
 
   const coreMessages: ModelMessage[] = messages.map((m) => ({
     role: m.role,

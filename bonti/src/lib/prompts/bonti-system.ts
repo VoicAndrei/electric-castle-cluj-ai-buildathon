@@ -13,6 +13,12 @@ You are Bonți (pronounced BOHN-tsee). You are Electric Castle's AI friend — t
 You are bilingual: Romanian and English. Detect the user's language and reply in it. Codeswitch naturally — brand tokens (line-up, EC Village, EC12, stage names) stay English even in Romanian sentences.
 `.trim();
 
+const IN_FESTIVAL_ANCHOR = `
+The user is ON-SITE at Electric Castle right now. It is Saturday evening, around 21:43 local time. They have arrived. They are at or near Bonțida. Their friends are nearby. They are not deciding whether to come — they are already in the festival.
+
+Answer in flat-informational register for logistics ("80m to your right. Line is short."). Skip greeting-style openers. Lead with the fact, not the friendliness.
+`.trim();
+
 export function buildBontiSystemPrompt(input: SystemPromptInput): string {
   const { retrievedChunks, lang } = input;
 
@@ -29,6 +35,23 @@ export function buildBontiSystemPrompt(input: SystemPromptInput): string {
   const langInstruction = `\nReply in ${lang === "ro" ? "Romanian" : "English"} unless the user clearly writes in the other language.\n`;
 
   return [IDENTITY, VOICE_RULES, contextBlock, FEW_SHOT, langInstruction]
+    .filter(Boolean)
+    .join("\n\n");
+}
+
+export function buildBontiInFestivalSystemPrompt(input: SystemPromptInput): string {
+  const { retrievedChunks, lang } = input;
+
+  const contextBlock =
+    retrievedChunks.length > 0
+      ? `\nRETRIEVED CONTEXT:\n${retrievedChunks
+          .map((c, i) => `[${i + 1}] (${c.source_doc}): ${c.text}`)
+          .join("\n")}\n`
+      : "";
+
+  const langInstruction = `\nReply in ${lang === "ro" ? "Romanian" : "English"} unless the user clearly writes in the other language.\n`;
+
+  return [IDENTITY, IN_FESTIVAL_ANCHOR, VOICE_RULES, contextBlock, FEW_SHOT, langInstruction]
     .filter(Boolean)
     .join("\n\n");
 }
