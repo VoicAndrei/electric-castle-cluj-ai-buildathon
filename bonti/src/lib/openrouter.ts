@@ -11,7 +11,7 @@ const openrouter = createOpenAI({
 
 // Primary: OpenRouter's auto-router picks any currently-available free model
 // (handles per-model rate limits and provider outages transparently).
-export const BONTI_LLM = openrouter("openrouter/auto");
+export const BONTI_LLM = openrouter("openrouter/free");
 
 // Fallbacks for completion-style calls where auto-router can't be used directly.
 // Listed in preferred order; route swaps to next on rate-limit/provider error.
