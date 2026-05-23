@@ -1,2 +1,21 @@
-.DS_Store
+# Editor
 .idea/
+.vscode/
+.DS_Store
+
+# Node
+node_modules/
+
+# Env
+.env.local
+.env*.local
+.env
+
+# Build artifacts
+bonti/.next/
+bonti/out/
+bonti/.vercel/
+
+# Supabase
+bonti/supabase/.branches/
+bonti/supabase/.temp/
