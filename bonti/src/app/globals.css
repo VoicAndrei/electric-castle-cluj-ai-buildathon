@@ -194,3 +194,14 @@ h1, h2, h3, h4, h5 {
     @apply font-sans;
   }
 }
+
+@keyframes bonti-bob {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-3px); }
+}
+.animate-bonti-bob {
+  animation: bonti-bob 2.2s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .animate-bonti-bob { animation: none; }
+}

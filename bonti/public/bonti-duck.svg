@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+  <!-- body -->
+  <ellipse cx="100" cy="135" rx="78" ry="55" fill="#F2D43A"/>
+  <!-- head -->
+  <circle cx="100" cy="72" r="50" fill="#F2D43A"/>
+  <!-- bill (upper) -->
+  <ellipse cx="110" cy="88" rx="28" ry="10" fill="#E97A24"/>
+  <!-- bill (lower lip line) -->
+  <ellipse cx="110" cy="93" rx="22" ry="3" fill="#C75E13"/>
+  <!-- left eye white -->
+  <ellipse cx="84" cy="62" rx="11" ry="13" fill="#FFFFFF"/>
+  <!-- right eye white -->
+  <ellipse cx="110" cy="62" rx="11" ry="13" fill="#FFFFFF"/>
+  <!-- left pupil -->
+  <circle cx="83" cy="63" r="6" fill="#0A0A0A"/>
+  <!-- right pupil -->
+  <circle cx="109" cy="63" r="6" fill="#0A0A0A"/>
+</svg>

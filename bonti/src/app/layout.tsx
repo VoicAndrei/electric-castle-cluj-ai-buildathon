@@ -4,6 +4,10 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "Bonți — Electric Castle 2026",
   description: "Your EC friend. From 'should I even go?' to dancing at the right stage.",
+  icons: {
+    icon: "/icons/bonti-32.png",
+    apple: "/icons/bonti-180.png",
+  },
 };
 
 export default function RootLayout({
