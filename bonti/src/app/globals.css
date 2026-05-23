@@ -202,3 +202,10 @@ h1, h2, h3, h4, h5 {
 @utility animate-bonti-bob {
   animation: bonti-bob 2.2s ease-in-out infinite;
 }
+
+@layer utilities {
+  .pt-safe { padding-top: env(safe-area-inset-top); }
+  .pb-safe { padding-bottom: env(safe-area-inset-bottom); }
+  .h-safe-top { height: env(safe-area-inset-top); }
+  .h-safe-bottom { height: env(safe-area-inset-bottom); }
+}
