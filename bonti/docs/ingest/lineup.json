@@ -1,0 +1,14 @@
+[
+  { "artist": "The Cure", "day": "Saturday", "stage": "Main Stage", "ec_tags": ["alternative-rock", "post-punk"], "genres": ["rock"] },
+  { "artist": "Twenty One Pilots", "day": "Sunday", "stage": "Main Stage", "ec_tags": ["alt-pop", "mainstream"], "genres": ["pop", "alternative"] },
+  { "artist": "Teddy Swims", "day": "Friday", "stage": "Main Stage", "ec_tags": ["soul", "r-and-b"], "genres": ["soul"] },
+  { "artist": "Chase & Status", "day": "Saturday", "stage": "Hangar Stage", "ec_tags": ["dancefloor", "drum-and-bass"], "genres": ["electronic"] },
+  { "artist": "Wet Leg", "day": "Friday", "stage": "Booha Stage", "ec_tags": ["indie-rock", "post-punk"], "genres": ["indie"] },
+  { "artist": "Kneecap", "day": "Saturday", "stage": "Booha Stage", "ec_tags": ["irish-rap", "alt-pop"], "genres": ["hip-hop"] },
+  { "artist": "LP", "day": "Friday", "stage": "Main Stage", "ec_tags": ["alt-pop", "indie"], "genres": ["pop"] },
+  { "artist": "Mochakk", "day": "Saturday", "stage": "Hangar Stage", "ec_tags": ["house", "tech-house"], "genres": ["electronic"] },
+  { "artist": "Nothing But Thieves", "day": "Sunday", "stage": "Main Stage", "ec_tags": ["alternative-rock"], "genres": ["rock"] },
+  { "artist": "Wilkinson", "day": "Friday", "stage": "Hangar Stage", "ec_tags": ["drum-and-bass"], "genres": ["electronic"] },
+  { "artist": "Subtronics", "day": "Saturday", "stage": "Hangar Stage", "ec_tags": ["dubstep"], "genres": ["electronic"] },
+  { "artist": "Yung Lean & Bladee", "day": "Saturday", "stage": "Booha Stage", "ec_tags": ["cloud-rap", "hyperpop"], "genres": ["hip-hop"] }
+]
