@@ -1,4 +1,4 @@
-import { streamText, generateText, type ModelMessage } from "ai";
+import { generateText, type ModelMessage } from "ai";
 import { BONTI_LLM, FALLBACK_MODELS, getOpenRouterFor } from "@/lib/openrouter";
 import { rewriteForRetrieval } from "@/lib/retrieval/rewrite";
 import { hybridRetrieve } from "@/lib/retrieval/hybrid";
@@ -74,7 +74,9 @@ export async function POST(req: Request) {
     content: m.content,
   }));
 
-  // For the final streamed reply, try the auto-router first and fall back on error.
+  // Buffer the reply server-side so we can validate non-empty and walk the
+  // fallback chain when a free model returns nothing (the empty-bubble bug).
+  // We give up token-by-token streaming for guaranteed-non-empty replies.
   const candidates: Array<{ model: ReturnType<typeof getOpenRouterFor>; label: string }> = [
     { model: BONTI_LLM, label: "auto-router" },
     ...FALLBACK_MODELS.map((id) => ({ model: getOpenRouterFor(id), label: id })),
@@ -83,20 +85,25 @@ export async function POST(req: Request) {
   let lastErr: unknown = null;
   for (const { model, label } of candidates) {
     try {
-      const result = streamText({
+      const { text } = await generateText({
         model,
         system: systemPrompt,
         messages: coreMessages,
-        temperature: 0.6,
-        onError: (e) => {
-          // Streaming errors surface here; the loop's catch handles non-streaming errors.
-          console.error(`[chat] stream error from ${label}:`, e);
-        },
+        temperature: 0.3,
+        maxRetries: 0,
       });
-      return result.toTextStreamResponse();
+      const reply = text?.trim();
+      if (reply) {
+        return new Response(reply, {
+          status: 200,
+          headers: { "content-type": "text/plain; charset=utf-8" },
+        });
+      }
+      lastErr = new Error(`Empty reply from ${label}`);
+      console.warn(`[chat] ${label} returned empty, walking fallback`);
     } catch (e) {
       lastErr = e;
-      console.error(`[chat] failed with ${label}:`, e);
+      console.warn(`[chat] ${label} threw, walking fallback:`, (e as Error).message);
     }
   }
   return new Response(

@@ -9,7 +9,7 @@ export function ChatShell() {
   return (
     <section className="flex-1 flex flex-col gap-6 px-6 py-8 max-w-2xl w-full mx-auto">
       <div className="flex-1 flex flex-col">
-        <MessageList messages={messages} />
+        <MessageList messages={messages} loading={loading} />
       </div>
       <ChatInput onSubmit={(t) => send(t)} disabled={loading} />
     </section>
