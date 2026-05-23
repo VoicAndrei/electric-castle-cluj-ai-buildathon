@@ -1,7 +1,9 @@
 import { pipeline, env, type FeatureExtractionPipeline } from "@xenova/transformers";
 
-// Cache the model — locally use node_modules, on Vercel use /tmp
-env.cacheDir = process.env.HF_CACHE_DIR ?? "./.transformers-cache";
+// Cache the model — use /tmp on Vercel/Linux, local dir otherwise
+env.cacheDir =
+  process.env.HF_CACHE_DIR ??
+  (process.platform === "linux" ? "/tmp/.transformers-cache" : "./.transformers-cache");
 env.allowLocalModels = false; // always fetch from HF for portability
 
 let extractorPromise: Promise<FeatureExtractionPipeline> | null = null;

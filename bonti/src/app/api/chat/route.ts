@@ -1,4 +1,4 @@
-import { streamText, generateText, type CoreMessage } from "ai";
+import { streamText, generateText, type ModelMessage } from "ai";
 import { BONTI_LLM, FALLBACK_MODELS, getOpenRouterFor } from "@/lib/openrouter";
 import { rewriteForRetrieval } from "@/lib/retrieval/rewrite";
 import { generateHydeAnswer } from "@/lib/retrieval/hyde";
@@ -70,7 +70,7 @@ export async function POST(req: Request) {
     lang,
   });
 
-  const coreMessages: CoreMessage[] = messages.map((m) => ({
+  const coreMessages: ModelMessage[] = messages.map((m) => ({
     role: m.role,
     content: m.content,
   }));
