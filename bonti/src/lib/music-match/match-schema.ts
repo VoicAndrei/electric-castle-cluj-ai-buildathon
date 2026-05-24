@@ -2,7 +2,7 @@ import { z } from "zod";
 
 export const MatchPickSchema = z.object({
   artist: z.string().min(1),
-  day: z.enum(["Friday", "Saturday", "Sunday"]),
+  day: z.enum(["Thursday", "Friday", "Saturday", "Sunday"]),
   stage: z.string().min(1),
   reason: z.string().min(1).max(200),
 });

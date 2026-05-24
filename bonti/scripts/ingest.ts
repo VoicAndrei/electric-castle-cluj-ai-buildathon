@@ -1,5 +1,7 @@
 import { readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
+import { config } from "dotenv";
+config({ path: ".env.local" });
 import matter from "gray-matter";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { embedMany } from "@/lib/embeddings";

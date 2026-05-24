@@ -8,7 +8,7 @@ import { formatLocalRange } from "@/lib/festival/time";
 export type EditorRow = {
   id: string;
   artist_name: string;
-  day: "Friday" | "Saturday" | "Sunday";
+  day: "Thursday" | "Friday" | "Saturday" | "Sunday";
   stage: string;
   start_at: string | null;
   end_at: string | null;
@@ -18,7 +18,7 @@ export type EditorRow = {
   sort_order: number;
 };
 
-const DAYS = ["All", "Friday", "Saturday", "Sunday"] as const;
+const DAYS = ["All", "Thursday", "Friday", "Saturday", "Sunday"] as const;
 type DayTab = (typeof DAYS)[number];
 
 export function LineupEditor({ initial }: { initial: EditorRow[] }) {

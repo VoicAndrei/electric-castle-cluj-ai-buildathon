@@ -43,7 +43,7 @@ export const EventPayloadSchemas = {
     friend_count: z.number().int().nonnegative(),
   }),
   lineup_view: z.object({
-    day: z.enum(["Friday", "Saturday", "Sunday"]),
+    day: z.enum(["Thursday", "Friday", "Saturday", "Sunday"]),
     language: z.enum(["en", "ro"]),
     has_match: z.boolean(),
   }),

@@ -6,7 +6,7 @@ import { createClient } from "@/lib/supabase/client";
 export type LineupRow = {
   id: string;
   artist_name: string;
-  day: "Friday" | "Saturday" | "Sunday";
+  day: "Thursday" | "Friday" | "Saturday" | "Sunday";
   stage: string;
   start_at: string | null;
   end_at: string | null;
@@ -22,7 +22,7 @@ type Change = {
   old: { id: string };
 };
 
-const DAY_ORDER: Record<LineupRow["day"], number> = { Friday: 0, Saturday: 1, Sunday: 2 };
+const DAY_ORDER: Record<LineupRow["day"], number> = { Thursday: 0, Friday: 1, Saturday: 2, Sunday: 3 };
 
 export function byDayThenSort(a: LineupRow, b: LineupRow): number {
   return (

@@ -88,7 +88,7 @@ export function LineupEditSheet({
           <fieldset>
             <legend className="font-roboto text-xs text-bonti-text/70">Day</legend>
             <div className="mt-1 flex gap-1">
-              {(["Friday", "Saturday", "Sunday"] as const).map(d => (
+              {(["Thursday", "Friday", "Saturday", "Sunday"] as const).map(d => (
                 <button
                   key={d}
                   type="button"

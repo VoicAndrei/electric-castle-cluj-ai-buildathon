@@ -9,7 +9,7 @@ import { useLineupRealtime, type LineupRow as Row } from "@/hooks/use-lineup-rea
 import { useEventLogger } from "@/hooks/use-event-logger";
 import { createClient } from "@/lib/supabase/client";
 
-const DAYS: Row["day"][] = ["Friday", "Saturday", "Sunday"];
+const DAYS: Row["day"][] = ["Thursday", "Friday", "Saturday", "Sunday"];
 
 type MatchOutput = {
   picks: { artist: string }[];

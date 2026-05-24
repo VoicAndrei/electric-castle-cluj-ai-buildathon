@@ -10,7 +10,7 @@ export type { LineupEntry };
 export type LineupRow = {
   id: string;
   artist_name: string;
-  day: "Friday" | "Saturday" | "Sunday";
+  day: "Thursday" | "Friday" | "Saturday" | "Sunday";
   stage: string;
   start_at: string | null;
   end_at: string | null;

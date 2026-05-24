@@ -16,7 +16,7 @@ const refineEndAfterStart = (d: { start_at: string | null; end_at: string | null
 
 export const LineupEntryInput = z.object({
   artist_name: z.string().min(1).max(80),
-  day: z.enum(["Friday", "Saturday", "Sunday"]),
+  day: z.enum(["Thursday", "Friday", "Saturday", "Sunday"]),
   stage: z.string().min(1).max(60),
   start_at: isoOrNull,
   end_at: isoOrNull,
@@ -28,7 +28,7 @@ export const LineupEntryInput = z.object({
 
 export const LineupEntryPatch = z.object({
   artist_name: z.string().min(1).max(80).optional(),
-  day: z.enum(["Friday", "Saturday", "Sunday"]).optional(),
+  day: z.enum(["Thursday", "Friday", "Saturday", "Sunday"]).optional(),
   stage: z.string().min(1).max(60).optional(),
   start_at: isoOrNull.optional(),
   end_at: isoOrNull.optional(),
