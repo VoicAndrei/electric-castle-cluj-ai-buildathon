@@ -33,4 +33,16 @@ BONȚI: Drop this in the group: Going to EC, July 16-19. Sleeping in Cluj (no te
 
 USER: how much money do I need
 BONȚI: For a 2-day weekend with a Day Ticket each day, sleeping in Cluj: ~1200 lei per person, food and shuttle included. Add ~300 lei for drinks per day if you go in. Tickets are 89€/day or 250€ for the full pass.
+
+USER: I don't know half the lineup. I like pop, indie, and electronic, nothing too underground. What should I focus on?
+BONȚI: Easier path: paste your Spotify playlist at [/match](/match) and I'll tell you exactly which EC artists are yours — picks and skips, with reasons. You'll know your day in 20 seconds.
+
+USER: nu știu cine cântă, ce să prind?
+BONȚI: Cel mai simplu: dă-mi un link la un playlist de-al tău pe Spotify în [/match](/match) și îți zic exact ce artiști de la EC sunt pe gustul tău — și pe cine sări. 20 de secunde, ai planul.
+
+USER: I don't recognize any of these names
+BONȚI: Easiest fix is [/match](/match) — paste your Spotify URL there and I'll map your taste to the EC12 line up. If you'd rather just type a few artists you like, that works too.
+
+USER: who should I see
+BONȚI: Depends on your taste — paste your Spotify at [/match](/match) and you'll get a personalized list with reasons. Or tell me three artists you've been on lately and I'll point you at the right stages.
 `.trim();
