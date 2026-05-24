@@ -10,8 +10,7 @@ export function BontiHeader() {
     <header className="sticky top-0 z-10 bg-bonti-toolbar px-4 sm:px-6 py-3 sm:py-4">
       <div className="max-w-2xl mx-auto flex justify-between items-center gap-3">
         <Link href="/" className="flex items-center gap-2 sm:gap-3 min-w-0">
-          <BontiAvatar size="sm" decorative className="sm:hidden" />
-          <BontiAvatar size="md" decorative className="hidden sm:inline-block" />
+          <BontiAvatar size="sm" decorative />
           <div className="min-w-0">
             <h1 className="text-bonti-red text-xl sm:text-2xl font-sofia leading-none">
               {BRAND.name}
