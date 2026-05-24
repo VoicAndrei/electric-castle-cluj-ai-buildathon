@@ -4,6 +4,7 @@ import { fetchSpotifyPlaylist, type NormalizedPlaylist } from "@/lib/music-match
 import { parseFreeform } from "@/lib/music-match/freeform";
 import { matchToLineup } from "@/lib/music-match/match-llm";
 import { hashUrl, getCachedMatch, saveMatch } from "@/lib/music-match/cache";
+import { LINEUP_FINGERPRINT } from "@/lib/music-match/lineup-fingerprint";
 import type { Lang } from "@/types/chat";
 import { logEvent } from "@/lib/telemetry/log-event";
 import { readSessionIdFromCookies } from "@/lib/telemetry/session";
@@ -39,7 +40,7 @@ export async function POST(req: Request) {
     const id = extractSpotifyPlaylistId(body.url);
     if (!id) return Response.json({ error: "invalid_spotify_url" }, { status: 400 });
 
-    cacheKey = hashUrl(`spotify:${id}`);
+    cacheKey = hashUrl(`spotify:${id}:lineup=${LINEUP_FINGERPRINT}`);
     const cached = await getCachedMatch(supabase, cacheKey);
     if (cached) return Response.json(cached);
 
@@ -57,7 +58,7 @@ export async function POST(req: Request) {
     if (normalized.artists.length === 0) {
       return Response.json({ error: "empty_freeform" }, { status: 400 });
     }
-    cacheKey = hashUrl(`freeform:${lang}:${normalized.artists.map((a) => a.name).join("|")}`);
+    cacheKey = hashUrl(`freeform:${lang}:lineup=${LINEUP_FINGERPRINT}:${normalized.artists.map((a) => a.name).join("|")}`);
     const cached = await getCachedMatch(supabase, cacheKey);
     if (cached) return Response.json(cached);
     source = "freeform";
