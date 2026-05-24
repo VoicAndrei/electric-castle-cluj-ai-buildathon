@@ -31,15 +31,44 @@ export function LineupClient({ initial }: { initial: Row[] }) {
 
   useEffect(() => {
     const sb = createClient();
+    // Union picks/skips across the recent music_matches history so adding
+    // another playlist accumulates rather than overwrites the green/red
+    // overlays. The list is capped at 20 to bound payload; ordering is
+    // newest-first so the latest intro and input win for ArtistSheet's
+    // personalization. Picks beat skips when the same artist appears as
+    // both across different playlists.
     sb.from("music_matches")
       .select("output, input, created_at")
       .order("created_at", { ascending: false })
-      .limit(1)
-      .maybeSingle()
+      .limit(20)
       .then(({ data }) => {
-        if (data?.output) {
-          setMatch({ ...(data.output as MatchOutput), input: data.input ?? undefined });
+        if (!data || data.length === 0) return;
+        const newest = data[0];
+        const newestOutput = newest.output as MatchOutput | null;
+        if (!newestOutput) return;
+
+        const pickByArtist = new Map<string, MatchOutput["picks"][number]>();
+        const skipByArtist = new Map<string, MatchOutput["skips"][number]>();
+        for (const row of data) {
+          const out = row.output as MatchOutput | null;
+          if (!out) continue;
+          for (const p of out.picks ?? []) {
+            const key = p.artist.toLowerCase();
+            if (!pickByArtist.has(key)) pickByArtist.set(key, p);
+          }
+          for (const s of out.skips ?? []) {
+            const key = s.artist.toLowerCase();
+            if (!skipByArtist.has(key)) skipByArtist.set(key, s);
+          }
         }
+        for (const key of pickByArtist.keys()) skipByArtist.delete(key);
+
+        setMatch({
+          intro: newestOutput.intro,
+          picks: Array.from(pickByArtist.values()),
+          skips: Array.from(skipByArtist.values()),
+          input: newest.input ?? undefined,
+        });
       });
   }, []);
 
