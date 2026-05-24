@@ -13,6 +13,7 @@ export type SeededPing = {
   title: string;
   body: string;
   deeplink?: string;
+  urgent?: boolean;
 };
 
 export const DEMO_NOW = new Date("2026-07-18T21:43:00+03:00"); // Saturday, EC
