@@ -1,6 +1,6 @@
 "use client";
 
-import type { ReactNode } from "react";
+import { useRef, type PointerEvent, type ReactNode } from "react";
 import Image from "next/image";
 import {
   TransformWrapper,
@@ -29,6 +29,13 @@ type Props = {
    * with the map. Sits *above* the default pins in z-order.
    */
   overlay?: ReactNode;
+  /**
+   * Called when the user taps the map (not a drag). Coords are in the same
+   * 0-1000 grid used by pins. The handler is wired to a pointer interaction
+   * that ignores movement above a small threshold, so pan gestures don't
+   * accidentally drop a pin.
+   */
+  onMapClick?: (coords: { x: number; y: number }) => void;
   className?: string;
 };
 
@@ -84,7 +91,34 @@ function ZoomControls() {
  * and drag-to-pan all work. Pin DOM lives inside the transformed element so
  * pins move + scale with the map.
  */
-export function VenueMap({ pins = [], overlay, className }: Props) {
+const TAP_PIXEL_THRESHOLD = 6;
+
+export function VenueMap({ pins = [], overlay, onMapClick, className }: Props) {
+  // Track pointerdown coords to distinguish a tap from a pan-drag. A pan
+  // moves the pointer; a tap stays within TAP_PIXEL_THRESHOLD. We only fire
+  // onMapClick for taps so dragging the map never drops a pin.
+  const downRef = useRef<{ x: number; y: number } | null>(null);
+
+  const handlePointerDown = (e: PointerEvent<HTMLDivElement>) => {
+    downRef.current = { x: e.clientX, y: e.clientY };
+  };
+
+  const handlePointerUp = (e: PointerEvent<HTMLDivElement>) => {
+    const start = downRef.current;
+    downRef.current = null;
+    if (!start || !onMapClick) return;
+    const dx = e.clientX - start.x;
+    const dy = e.clientY - start.y;
+    if (Math.hypot(dx, dy) > TAP_PIXEL_THRESHOLD) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    if (rect.width === 0 || rect.height === 0) return;
+    const gx = ((e.clientX - rect.left) / rect.width) * 1000;
+    const gy = ((e.clientY - rect.top) / rect.height) * 1000;
+    const x = Math.max(0, Math.min(1000, gx));
+    const y = Math.max(0, Math.min(1000, gy));
+    onMapClick({ x, y });
+  };
+
   return (
     <div
       className={[
@@ -112,6 +146,9 @@ export function VenueMap({ pins = [], overlay, className }: Props) {
             className="relative w-full h-full"
             role="img"
             aria-label="Electric Castle venue map with friend positions"
+            onPointerDown={onMapClick ? handlePointerDown : undefined}
+            onPointerUp={onMapClick ? handlePointerUp : undefined}
+            style={onMapClick ? { cursor: "crosshair" } : undefined}
           >
             <Image
               src="/ec-map.png"

@@ -11,14 +11,35 @@ export default function GroupPage() {
   const friends = useFestivalStore(s => s.friends);
   const groupMeeting = useFestivalStore(s => s.group_meeting);
   const applyGroupConverge = useFestivalStore(s => s.applyGroupConverge);
+  const setManualMeeting = useFestivalStore(s => s.setManualMeeting);
+  const clearMeeting = useFestivalStore(s => s.clearMeeting);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [resultLine, setResultLine] = useState<string | null>(null);
 
-  const pins = [
-    { id: maria.id,   coords: maria.coords,   color: "#EB0000", label: maria.name[0] },
+  // Source defaults to "bonti" so persisted meetings written before this
+  // field existed still surface a sensible label after a reload.
+  const meetingSource = groupMeeting?.source ?? "bonti";
+  const meetingVenueName = groupMeeting?.point_id
+    ? findVenueById(groupMeeting.point_id)?.name ?? null
+    : null;
+
+  const basePins = [
+    { id: maria.id, coords: maria.coords, color: "#EB0000", label: maria.name[0] },
     ...friends.map(f => ({ id: f.id, coords: f.coords, color: "#0A0A0A", label: f.name[0] })),
   ];
+  const pins = groupMeeting
+    ? [
+        ...basePins,
+        {
+          id: "__meeting__",
+          coords: groupMeeting.coords,
+          color: meetingSource === "manual" ? "#1E40AF" : "#EB0000",
+          label: "📍",
+          size: 34,
+        },
+      ]
+    : basePins;
 
   const meet = async () => {
     setLoading(true);
@@ -59,11 +80,26 @@ export default function GroupPage() {
       <div className="px-4 pt-4">
         <p className="text-bonti-text font-roboto text-sm">
           👥 Group of {friends.length + 1}
-          {groupMeeting ? ` · meeting at ${findVenueById(groupMeeting.point_id)?.name ?? "?"}` : " · spread across the venue"}
+          {groupMeeting
+            ? meetingVenueName
+              ? ` · meeting at ${meetingVenueName}`
+              : " · meeting at your dropped pin"
+            : " · spread across the venue"}
         </p>
       </div>
       <div className="px-4 pt-4">
-        <VenueMap pins={pins} highlight={groupMeeting?.point_id} />
+        <VenueMap
+          pins={pins}
+          highlight={groupMeeting?.point_id}
+          onMapClick={(coords) => {
+            setManualMeeting(coords);
+            setResultLine(null);
+            setError(null);
+          }}
+        />
+        <p className="mt-2 text-bonti-text/70 font-roboto text-[11px]">
+          Tap the map to drop a manual meeting pin.
+        </p>
       </div>
 
       <div className="px-4 pt-4">
@@ -78,13 +114,45 @@ export default function GroupPage() {
           </button>
         ) : (
           <div className="bg-bonti-surface border border-black/5 rounded-xl p-4">
-            <p className="text-bonti-text font-sofia uppercase text-sm">
-              ETA {groupMeeting.eta_min} min
-            </p>
-            <p className="text-bonti-text font-roboto text-sm mt-1">{groupMeeting.reason}</p>
-            {resultLine && (
-              <p className="text-bonti-text/70 font-roboto text-xs italic mt-2">
-                Bonți pushed: &ldquo;{resultLine}&rdquo;
+            <div className="flex items-center justify-between gap-2">
+              <span
+                className={[
+                  "inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-sofia uppercase tracking-wide text-[10px]",
+                  meetingSource === "manual"
+                    ? "bg-blue-100 text-blue-800"
+                    : "bg-bonti-red/10 text-bonti-red",
+                ].join(" ")}
+              >
+                {meetingSource === "manual" ? "🖐️ Manual pick" : "🤖 Chosen by Bonți"}
+              </span>
+              <button
+                type="button"
+                onClick={() => {
+                  clearMeeting();
+                  setResultLine(null);
+                }}
+                className="text-[11px] font-roboto underline text-bonti-text/70"
+              >
+                Clear pin
+              </button>
+            </div>
+            {meetingSource === "bonti" ? (
+              <>
+                <p className="text-bonti-text font-sofia uppercase text-sm mt-2">
+                  ETA {groupMeeting.eta_min} min
+                </p>
+                <p className="text-bonti-text font-roboto text-sm mt-1">{groupMeeting.reason}</p>
+                {resultLine && (
+                  <p className="text-bonti-text/70 font-roboto text-xs italic mt-2">
+                    Bonți pushed: &ldquo;{resultLine}&rdquo;
+                  </p>
+                )}
+              </>
+            ) : (
+              <p className="text-bonti-text font-roboto text-sm mt-2">
+                {meetingVenueName
+                  ? `Meeting at ${meetingVenueName}.`
+                  : "Meeting at the dropped pin."}
               </p>
             )}
           </div>
