@@ -96,11 +96,13 @@ export function CompassRouteMap({ target, from, heading }: Props) {
       </svg>
 
       <CounterScaled
-        className="absolute size-9 rounded-full bg-white shadow-[0_0_0_3px_white,0_2px_8px_rgba(0,0,0,0.4)] flex items-center justify-center text-lg animate-route-pulse pointer-events-none"
+        className="absolute pointer-events-none"
         style={{ left: userLeft, top: userTop }}
         aria-label="Your position"
       >
-        <span>{MARIA.avatar_emoji}</span>
+        <div className="size-9 rounded-full bg-bonti-red shadow-[0_0_0_3px_white,0_2px_8px_rgba(0,0,0,0.4)] flex items-center justify-center font-sofia text-xs font-bold text-white animate-route-pulse">
+          <span>{MARIA.name[0]}</span>
+        </div>
       </CounterScaled>
 
       <CounterScaled
