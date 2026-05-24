@@ -28,7 +28,7 @@ export function BontiAvatar({
     >
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
-        src="/bonti-duck.svg"
+        src="/bonti-img.png"
         alt=""
         width={px}
         height={px}
