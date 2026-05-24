@@ -14,8 +14,11 @@ const TABS = [
 export function AppTabbar() {
   const pathname = usePathname();
   return (
-    <nav className="sticky bottom-0 z-30 bg-bonti-surface border-t border-black/5 pb-safe">
-      <ul className="flex h-14">
+    <nav
+      className="fixed bottom-0 inset-x-0 z-30 bg-bonti-surface border-t border-black/5 pb-safe"
+      aria-label="Primary"
+    >
+      <ul className="mx-auto max-w-[480px] flex h-14">
         {TABS.map((t) => {
           const active =
             t.href === "/app" ? pathname === "/app" : pathname.startsWith(t.href);

@@ -10,8 +10,8 @@ export function BontiChatFAB() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
 
-  // Hide FAB on the home page (chat is already on the page) and outside /app.
-  if (pathname === "/app" || !pathname.startsWith("/app")) return null;
+  // Show on every /app surface — chat is one tap away above the fixed tab bar.
+  if (!pathname.startsWith("/app")) return null;
 
   return (
     <>
@@ -35,17 +35,14 @@ export function BontiChatFAB() {
             <motion.div
               initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }}
               transition={{ type: "spring", stiffness: 280, damping: 30 }}
-              className="fixed inset-x-0 bottom-0 z-50 bg-bonti-surface rounded-t-2xl pt-3 pb-4 mx-auto max-w-[480px] flex flex-col"
-              style={{ height: "70vh" }}
+              className="fixed inset-x-0 bottom-0 z-50 bg-bonti-surface rounded-t-2xl pt-3 pb-4 mx-auto max-w-[480px] flex flex-col h-[70dvh]"
             >
               <div className="w-10 h-1 bg-bonti-text/20 rounded-full mx-auto" />
               <div className="px-4 pt-2 pb-1 flex items-center justify-between">
                 <p className="font-sofia uppercase text-sm">Ask Bonți</p>
                 <button onClick={() => setOpen(false)} aria-label="Close" className="text-bonti-text/60">×</button>
               </div>
-              <div className="flex-1 overflow-y-auto">
-                <ChatShell mode="in_festival" />
-              </div>
+              <ChatShell mode="in_festival" layout="fill" />
             </motion.div>
           </>
         )}

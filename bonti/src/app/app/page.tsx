@@ -5,10 +5,13 @@ import { AppHeader } from "@/components/app-header";
 import { FestivalHero } from "@/components/festival-hero";
 import { AppTileGrid } from "@/components/app-tile-grid";
 import { LiveTicker } from "@/components/live-ticker";
-import { ChatShell } from "@/components/chat-shell";
 import { useFestivalStore } from "@/lib/festival/store";
 import { LIVE_GLASS_ANIMALS_PING, DEMO_NOW } from "@/data/festival-state";
 
+// Chat lives in the floating duck FAB on every /app surface (see
+// BontiChatFAB) — keeping it as a one-tap bottom-sheet means the user
+// never has to scroll past the tile grid to reach it, and the same
+// affordance works identically on every /app route.
 export default function AppHome() {
   const appendPing = useFestivalStore(s => s.appendPing);
   const unread = useFestivalStore(s => s.pings.filter(p => !p.read).length);
@@ -33,7 +36,6 @@ export default function AppHome() {
       <FestivalHero />
       <LiveTicker />
       <AppTileGrid />
-      <ChatShell mode="in_festival" />
     </>
   );
 }
