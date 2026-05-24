@@ -127,7 +127,7 @@ The foundation already created `(type, payload, session_id, created_at)` columns
 |---|---|---|
 | `chat_message` | `/api/chat` server | `{ user_message_len, response_len, retrieved_chunk_count, locale }` |
 | `match_completed` | `/api/match` server | `{ artists_count, top_artist, top_score, persona }` |
-| `compass_query` | `/api/compass` server | `{ query, target_venue_id, latency_ms }` |
+| `compass_query` | `/api/compass` server | `{ query_len, target_venue_id, latency_ms }` — literal query text not stored to avoid PII (users may include personal info). Length + resolution success + latency are enough for 3c analytics |
 | `group_converge` | `/api/group/converge` server | `{ venue_id, friend_count }` |
 | `lineup_view` | `/app/lineup` client mount | `{ day, language, has_match }` |
 | `artist_blurb_view` | artist sheet open client | `{ artist_name, language, source: 'cache' \| 'live' }` |
@@ -356,6 +356,8 @@ Fallback is demo-time insurance, not graceful-degradation papering over a real b
 3. `LineupEntry` type changes from JSON shape to `LineupRow` (adds `id`, `start_at`, `end_at`, `photo_url`)
 4. Match-score overlay continues to join by `artist_name` against `music_matches` — unchanged
 5. Time range renders as `font-roboto text-bonti-text/60` line under the stage; falls back to "TBA" when null
+
+**Timezone:** All set times stored as `timestamptz` (UTC on the wire), rendered in `Europe/Bucharest` on both `/app/lineup` and `/admin/lineup` via a shared `formatLocalTime(iso: string): string` util in `bonti/src/lib/festival/time.ts`. The admin edit-sheet's `<input type="datetime-local">` reads/writes local time in the browser's timezone and is converted to UTC before the PATCH body is built — the form helper makes this explicit ("All times Europe/Bucharest").
 
 ### `useLineupRealtime(initialRows)`
 
