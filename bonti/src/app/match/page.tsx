@@ -14,7 +14,7 @@ export default function MatchPage() {
 
   return (
     <main className="min-h-screen bg-bonti-bg flex flex-col">
-      <BontiHeader user={null} />
+      <BontiHeader />
       <section className="flex-1 mx-auto w-full max-w-2xl px-4 py-8 space-y-6">
         <header className="space-y-2">
           <h1 className="text-2xl font-semibold text-bonti-ink">Match your music to EC12</h1>

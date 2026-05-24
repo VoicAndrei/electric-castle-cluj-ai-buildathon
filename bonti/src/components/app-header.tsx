@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { BontiAvatar } from "@/components/bonti-avatar";
+import { AccountChip } from "@/components/account-chip";
 
 type Props = {
   title: string;
@@ -34,13 +35,14 @@ export function AppHeader({ title, showBack = false, unread = 0 }: Props) {
         <h1 className="text-white text-base font-sofia uppercase tracking-wide truncate">
           {title}
         </h1>
-        <div className="w-10 flex items-center justify-end">
+        <div className="flex items-center justify-end gap-3">
           <Link href="/app/notifications" aria-label="Notifications" className="relative">
             <span className="text-white/80 hover:text-white">🔔</span>
             {unread > 0 && (
               <span className="absolute -top-1 -right-1 size-2 bg-bonti-red rounded-full" />
             )}
           </Link>
+          <AccountChip />
         </div>
       </div>
     </header>
