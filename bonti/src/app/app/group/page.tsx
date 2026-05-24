@@ -16,6 +16,10 @@ export default function GroupPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [resultLine, setResultLine] = useState<string | null>(null);
+  // Tapping the map only previews a candidate; the meeting isn't committed
+  // until the user presses "Meet here". Cleared once a meeting commits or
+  // the user cancels the candidate.
+  const [pendingManual, setPendingManual] = useState<{ x: number; y: number } | null>(null);
 
   // Source defaults to "bonti" so persisted meetings written before this
   // field existed still surface a sensible label after a reload.
@@ -39,7 +43,18 @@ export default function GroupPage() {
           size: 34,
         },
       ]
-    : basePins;
+    : pendingManual
+      ? [
+          ...basePins,
+          {
+            id: "__pending__",
+            coords: pendingManual,
+            color: "#1E40AF",
+            label: "📍",
+            size: 34,
+          },
+        ]
+      : basePins;
 
   const meet = async () => {
     setLoading(true);
@@ -91,27 +106,57 @@ export default function GroupPage() {
         <VenueMap
           pins={pins}
           highlight={groupMeeting?.point_id}
-          onMapClick={(coords) => {
-            setManualMeeting(coords);
-            setResultLine(null);
-            setError(null);
-          }}
+          onMapClick={
+            groupMeeting
+              ? undefined
+              : (coords) => {
+                  setPendingManual(coords);
+                  setResultLine(null);
+                  setError(null);
+                }
+          }
         />
-        <p className="mt-2 text-bonti-text/70 font-roboto text-[11px]">
-          Tap the map to drop a manual meeting pin.
-        </p>
+        {!groupMeeting && (
+          <p className="mt-2 text-bonti-text/70 font-roboto text-[11px]">
+            {pendingManual
+              ? "Pin placed. Press “Meet here” to start the meeting."
+              : "Tap the map to pick a manual meeting spot."}
+          </p>
+        )}
       </div>
 
       <div className="px-4 pt-4">
         {!groupMeeting ? (
-          <button
-            type="button"
-            onClick={meet}
-            disabled={loading}
-            className="w-full bg-bonti-red text-white font-sofia uppercase tracking-wide rounded-lg py-3 disabled:opacity-50"
-          >
-            {loading ? "Bonți's thinking…" : "Let's meet up"}
-          </button>
+          pendingManual ? (
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setManualMeeting(pendingManual);
+                  setPendingManual(null);
+                }}
+                className="flex-1 bg-bonti-red text-white font-sofia uppercase tracking-wide rounded-lg py-3"
+              >
+                Meet here
+              </button>
+              <button
+                type="button"
+                onClick={() => setPendingManual(null)}
+                className="px-4 bg-bonti-surface border border-black/10 text-bonti-text font-sofia uppercase tracking-wide rounded-lg py-3"
+              >
+                Cancel
+              </button>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={meet}
+              disabled={loading}
+              className="w-full bg-bonti-red text-white font-sofia uppercase tracking-wide rounded-lg py-3 disabled:opacity-50"
+            >
+              {loading ? "Bonți's thinking…" : "Let's meet up"}
+            </button>
+          )
         ) : (
           <div className="bg-bonti-surface border border-black/5 rounded-xl p-4">
             <div className="flex items-center justify-between gap-2">
