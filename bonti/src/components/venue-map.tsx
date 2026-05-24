@@ -2,7 +2,12 @@
 
 import type { ReactNode } from "react";
 import Image from "next/image";
-import { TransformWrapper, TransformComponent, useControls } from "react-zoom-pan-pinch";
+import {
+  TransformWrapper,
+  TransformComponent,
+  useControls,
+  useTransformComponent,
+} from "react-zoom-pan-pinch";
 
 type Pin = {
   id: string;
@@ -26,6 +31,36 @@ type Props = {
   overlay?: ReactNode;
   className?: string;
 };
+
+function Pins({ pins }: { pins: Pin[] }) {
+  // Counter-scale so pins keep a constant visual size as the map zooms.
+  // Without this they grow with the transformed canvas and feel oversized.
+  const scale = useTransformComponent(({ state }) => state.scale);
+  return (
+    <>
+      {pins.map((p) => {
+        const size = p.size ?? 28;
+        return (
+          <div
+            key={p.id}
+            className="absolute rounded-full shadow-[0_0_0_3px_white,0_2px_6px_rgba(0,0,0,0.4)] flex items-center justify-center font-sofia text-xs font-bold text-white transition-[left,top] duration-[1.5s] ease-in-out"
+            style={{
+              left: `${p.coords.x / 10}%`,
+              top: `${p.coords.y / 10}%`,
+              width: size,
+              height: size,
+              backgroundColor: p.color ?? "#0A0A0A",
+              transform: `translate(-50%, -50%) scale(${1 / scale})`,
+              transformOrigin: "center",
+            }}
+          >
+            {p.label}
+          </div>
+        );
+      })}
+    </>
+  );
+}
 
 function ZoomControls() {
   const { zoomIn, zoomOut, resetTransform } = useControls();
@@ -87,26 +122,7 @@ export function VenueMap({ pins = [], overlay, className }: Props) {
               className="object-cover select-none pointer-events-none"
               draggable={false}
             />
-            {pins.map((p) => {
-              const leftPct = p.coords.x / 10;
-              const topPct = p.coords.y / 10;
-              const size = p.size ?? 28;
-              return (
-                <div
-                  key={p.id}
-                  className="absolute -translate-x-1/2 -translate-y-1/2 rounded-full shadow-[0_0_0_3px_white,0_2px_6px_rgba(0,0,0,0.4)] flex items-center justify-center font-sofia text-xs font-bold text-white transition-[left,top] duration-[1.5s] ease-in-out"
-                  style={{
-                    left: `${leftPct}%`,
-                    top: `${topPct}%`,
-                    width: size,
-                    height: size,
-                    backgroundColor: p.color ?? "#0A0A0A",
-                  }}
-                >
-                  {p.label}
-                </div>
-              );
-            })}
+            <Pins pins={pins} />
             {overlay}
           </div>
         </TransformComponent>

@@ -1,5 +1,7 @@
 "use client";
 
+import type { HTMLAttributes, ReactNode } from "react";
+import { useTransformComponent } from "react-zoom-pan-pinch";
 import { VenueMap } from "@/components/venue-map";
 import { distanceMeters, formatWalkTime } from "@/lib/festival/compass";
 import { emojiForKind } from "@/lib/festival/venue-emoji";
@@ -31,6 +33,31 @@ type Props = {
  * that gesture lives in CompassCard — without lifting state, this
  * component would never receive a heading on iOS.
  */
+type CounterScaledProps = HTMLAttributes<HTMLDivElement> & {
+  children: ReactNode;
+};
+
+/**
+ * Wraps an absolute-positioned element so it keeps a constant visual size as
+ * the parent VenueMap zooms. The element's CSS `transform` is owned here, so
+ * callers should not pass their own `translate-*` utility classes.
+ */
+function CounterScaled({ style, children, ...rest }: CounterScaledProps) {
+  const scale = useTransformComponent(({ state }) => state.scale);
+  return (
+    <div
+      {...rest}
+      style={{
+        ...style,
+        transform: `translate(-50%, -50%) scale(${1 / scale})`,
+        transformOrigin: "center",
+      }}
+    >
+      {children}
+    </div>
+  );
+}
+
 export function CompassRouteMap({ target, from, heading }: Props) {
   const distance = distanceMeters(from, target.coords);
   const midX = (from.x + target.coords.x) / 2;
@@ -45,7 +72,9 @@ export function CompassRouteMap({ target, from, heading }: Props) {
 
   const overlay = (
     <>
-      {/* Route line — SVG fills the same canvas as the pins */}
+      {/* Route line — SVG fills the same canvas as the pins. The line is
+          allowed to scale with the map so its endpoints stay glued to the
+          user + target coords; only the pin/pill chrome counter-scales. */}
       <svg
         viewBox="0 0 1000 1000"
         preserveAspectRatio="none"
@@ -66,31 +95,28 @@ export function CompassRouteMap({ target, from, heading }: Props) {
         />
       </svg>
 
-      {/* User pin */}
-      <div
-        className="absolute -translate-x-1/2 -translate-y-1/2 size-9 rounded-full bg-white shadow-[0_0_0_3px_white,0_2px_8px_rgba(0,0,0,0.4)] flex items-center justify-center text-lg animate-route-pulse pointer-events-none"
+      <CounterScaled
+        className="absolute size-9 rounded-full bg-white shadow-[0_0_0_3px_white,0_2px_8px_rgba(0,0,0,0.4)] flex items-center justify-center text-lg animate-route-pulse pointer-events-none"
         style={{ left: userLeft, top: userTop }}
         aria-label="Your position"
       >
         <span>{MARIA.avatar_emoji}</span>
-      </div>
+      </CounterScaled>
 
-      {/* Target pin */}
-      <div
-        className="absolute -translate-x-1/2 -translate-y-1/2 size-9 rounded-full bg-bonti-red shadow-[0_0_0_3px_white,0_2px_8px_rgba(0,0,0,0.4)] flex items-center justify-center text-lg pointer-events-none"
+      <CounterScaled
+        className="absolute size-9 rounded-full bg-bonti-red shadow-[0_0_0_3px_white,0_2px_8px_rgba(0,0,0,0.4)] flex items-center justify-center text-lg pointer-events-none"
         style={{ left: targetLeft, top: targetTop }}
         aria-label={`Target: ${target.name}`}
       >
         <span>{emojiForKind(target.kind)}</span>
-      </div>
+      </CounterScaled>
 
-      {/* Distance pill at the midpoint */}
-      <div
-        className="absolute -translate-x-1/2 -translate-y-1/2 bg-white text-bonti-text font-roboto text-[11px] font-medium px-2 py-0.5 rounded-full shadow-md whitespace-nowrap pointer-events-none"
+      <CounterScaled
+        className="absolute bg-white text-bonti-text font-roboto text-[11px] font-medium px-2 py-0.5 rounded-full shadow-md whitespace-nowrap pointer-events-none"
         style={{ left: pillLeft, top: pillTop }}
       >
         {Math.round(distance)}m · {formatWalkTime(distance)}
-      </div>
+      </CounterScaled>
 
       {/* North-rose — only when we actually have a phone heading */}
       {heading != null && (
