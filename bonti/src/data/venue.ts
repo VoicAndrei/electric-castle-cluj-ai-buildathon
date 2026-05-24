@@ -23,6 +23,14 @@ export const VENUE: VenuePoint[] = [
   { id: "banffy_stage",  name: "Banffy Castle", kind: "stage", coords: { x: 500, y: 200 }, ec_tag: "banffy", bonti_blurb: "Inside the castle. Strings and atmosphere." },
   { id: "beach_stage",   name: "The Beach",     kind: "beach", coords: { x: 220, y: 740 }, ec_tag: "beach",  bonti_blurb: "Sand, lake, beats. Recovery zone." },
 
+  // Smaller stages from the EC25 lineup that weren't in the original venue
+  // catalog. Coords are approximations spaced around the map so artist
+  // lookups have somewhere distinct to point.
+  { id: "hideout_stage",  name: "Hideout Stage",  kind: "stage", coords: { x: 640, y: 200 }, ec_tag: "hideout",  bonti_blurb: "Tucked-away electronic stage." },
+  { id: "backyard_stage", name: "Backyard Stage", kind: "stage", coords: { x: 260, y: 380 }, ec_tag: "backyard", bonti_blurb: "Outdoor, daytime, organic vibes." },
+  { id: "ping_pong_stage", name: "Ping Pong Stage", kind: "stage", coords: { x: 820, y: 580 }, ec_tag: "pingpong", bonti_blurb: "Underground, late-night basement energy." },
+  { id: "stables_stage",  name: "Stables Stage",  kind: "stage", coords: { x: 300, y: 240 }, ec_tag: "stables",  bonti_blurb: "Stone walls, intimate sets." },
+
   // Beer
   { id: "beer_garden_n", name: "Beer Garden North", kind: "beer", coords: { x: 540, y: 380 }, lineProbability: "low",  bonti_blurb: "Closest to Main. Always moves fast." },
   { id: "beer_garden_s", name: "Beer Garden South", kind: "beer", coords: { x: 460, y: 600 }, lineProbability: "med",  bonti_blurb: "Between Booha and food. Crowded around set times." },
