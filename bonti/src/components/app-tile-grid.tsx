@@ -6,7 +6,7 @@ const TILES = [
   { href: "/app/lineup",        label: "Lineup",      icon: "🎤" },
   { href: "/app/notifications", label: "Pings",       icon: "🔔" },
   { href: "/app/wait-times",    label: "Wait Times",  icon: "⏱️" },
-  { href: "/match",             label: "Match Music", icon: "🎵" },
+  { href: "/app/up-next",       label: "Up Next",     icon: "🎵" },
 ];
 
 export function AppTileGrid() {
