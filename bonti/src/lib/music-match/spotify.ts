@@ -5,75 +5,103 @@ export type NormalizedPlaylist = {
   artists: NormalizedArtist[];
 };
 
-type TokenCache = { token: string; expiresAt: number } | null;
-let tokenCache: TokenCache = null;
+/**
+ * Spotify's Nov 2024 Web API policy made `/v1/playlists/{id}` and
+ * `/v1/playlists/{id}/tracks` return empty / 403 under client-credentials
+ * auth for user-created playlists. The public embed page still ships the
+ * full track list inside `__NEXT_DATA__`, so we fetch + scrape it instead.
+ *
+ * No auth needed. No env vars needed. Caps at the first 100 tracks
+ * (Spotify embed limit), which is plenty for taste matching.
+ */
 
-export function _resetTokenCacheForTests() {
-  tokenCache = null;
-}
-
-async function getSpotifyToken(): Promise<string> {
-  const id = process.env.SPOTIFY_CLIENT_ID;
-  const secret = process.env.SPOTIFY_CLIENT_SECRET;
-  if (!id) throw new Error("SPOTIFY_CLIENT_ID not set");
-  if (!secret) throw new Error("SPOTIFY_CLIENT_SECRET not set");
-
-  if (tokenCache && tokenCache.expiresAt > Date.now() + 30_000) {
-    return tokenCache.token;
-  }
-
-  const basic = Buffer.from(`${id}:${secret}`).toString("base64");
-  const res = await fetch("https://accounts.spotify.com/api/token", {
-    method: "POST",
-    headers: {
-      Authorization: `Basic ${basic}`,
-      "Content-Type": "application/x-www-form-urlencoded",
-    },
-    body: "grant_type=client_credentials",
-  });
-  if (!res.ok) {
-    throw new Error(`Spotify token request failed: ${res.status}`);
-  }
-  const json = (await res.json()) as { access_token: string; expires_in: number };
-  tokenCache = {
-    token: json.access_token,
-    expiresAt: Date.now() + json.expires_in * 1000,
-  };
-  return json.access_token;
-}
-
-type SpotifyTrackItem = {
-  track: { name: string; artists: Array<{ name: string }> } | null;
+type EmbedTrack = {
+  title: string;
+  subtitle: string;
+  uri?: string;
 };
-type SpotifyPlaylistPage = {
-  tracks: { items: SpotifyTrackItem[]; next: string | null };
-};
+
+const EMBED_URL = (id: string) =>
+  `https://open.spotify.com/embed/playlist/${encodeURIComponent(id)}`;
+
+const NEXT_DATA_RE = /<script id="__NEXT_DATA__"[^>]*>([\s\S]*?)<\/script>/;
 
 export async function fetchSpotifyPlaylist(playlistId: string): Promise<NormalizedPlaylist> {
-  const token = await getSpotifyToken();
-  const url = `https://api.spotify.com/v1/playlists/${encodeURIComponent(playlistId)}?fields=tracks(items(track(name,artists(name))),next)`;
-  const res = await fetch(url, {
-    headers: { Authorization: `Bearer ${token}` },
+  const res = await fetch(EMBED_URL(playlistId), {
+    headers: {
+      "User-Agent": "Mozilla/5.0 (compatible; Bonti/1.0; +https://bonti-ten.vercel.app)",
+      Accept: "text/html",
+    },
   });
   if (!res.ok) {
-    throw new Error(`Spotify playlist fetch failed: ${res.status}`);
+    throw new Error(`Spotify playlist not reachable (HTTP ${res.status})`);
   }
-  const json = (await res.json()) as SpotifyPlaylistPage;
+  const html = await res.text();
+  const match = NEXT_DATA_RE.exec(html);
+  if (!match) {
+    throw new Error("Spotify embed page changed shape (no __NEXT_DATA__)");
+  }
+  let data: unknown;
+  try {
+    data = JSON.parse(match[1]);
+  } catch {
+    throw new Error("Spotify embed __NEXT_DATA__ failed to parse");
+  }
+  const list = findTrackList(data);
+  if (!list || list.length === 0) {
+    throw new Error("Playlist looks empty or private");
+  }
 
   const tracks: NormalizedTrack[] = [];
   const artistCounts = new Map<string, number>();
-  for (const item of json.tracks.items) {
-    if (!item.track) continue;
-    const t = item.track;
-    const primary = t.artists[0]?.name ?? "Unknown";
-    tracks.push({ title: t.name, artist: primary });
-    for (const a of t.artists) {
-      artistCounts.set(a.name, (artistCounts.get(a.name) ?? 0) + 1);
+  for (const item of list) {
+    if (!item.title || !item.subtitle) continue;
+    const artists = item.subtitle
+      .split(",")
+      // Spotify uses NBSP (U+00A0) between names; normalize to plain space.
+      .map((a) => a.replace(/ /g, " ").trim())
+      .filter(Boolean);
+    if (artists.length === 0) continue;
+    const primary = artists[0];
+    tracks.push({ title: item.title, artist: primary });
+    for (const a of artists) {
+      artistCounts.set(a, (artistCounts.get(a) ?? 0) + 1);
     }
   }
+  if (tracks.length === 0) {
+    throw new Error("Playlist contained no playable tracks");
+  }
+
   const artists: NormalizedArtist[] = [...artistCounts.entries()]
     .map(([name, frequency]) => ({ name, frequency }))
     .sort((a, b) => b.frequency - a.frequency || a.name.localeCompare(b.name));
 
   return { tracks, artists };
+}
+
+function findTrackList(data: unknown, depth = 0): EmbedTrack[] | null {
+  if (depth > 12) return null;
+  if (Array.isArray(data)) {
+    for (const v of data) {
+      const r = findTrackList(v, depth + 1);
+      if (r) return r;
+    }
+    return null;
+  }
+  if (data && typeof data === "object") {
+    const obj = data as Record<string, unknown>;
+    if (Array.isArray(obj.trackList)) {
+      return obj.trackList as EmbedTrack[];
+    }
+    for (const v of Object.values(obj)) {
+      const r = findTrackList(v, depth + 1);
+      if (r) return r;
+    }
+  }
+  return null;
+}
+
+/** Kept as a no-op export so the existing test import doesn't fail. */
+export function _resetTokenCacheForTests(): void {
+  /* token cache is gone — embed scrape needs no auth */
 }
