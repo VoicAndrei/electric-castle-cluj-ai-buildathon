@@ -2,6 +2,8 @@ import { generateText } from "ai";
 import { BONTI_LLM, FALLBACK_MODELS, getOpenRouterFor } from "@/lib/openrouter";
 import { buildConvergePrompt } from "@/lib/festival/prompts";
 import { extractConvergeJson } from "@/lib/festival/converge-schema";
+import { logEvent } from "@/lib/telemetry/log-event";
+import { readSessionIdFromCookies } from "@/lib/telemetry/session";
 
 export const runtime = "nodejs";
 export const maxDuration = 30;
@@ -31,7 +33,13 @@ export async function POST(req: Request) {
       });
       clearTimeout(timer);
       if (!text?.trim()) throw new Error(`Empty from ${label}`);
-      return Response.json(extractConvergeJson(text));
+      const converge = extractConvergeJson(text);
+      const sessionId = await readSessionIdFromCookies();
+      void logEvent("group_converge", {
+        venue_id: converge.meeting_point_id ?? "unknown",
+        friend_count: positions.length,
+      }, sessionId);
+      return Response.json(converge);
     } catch (e) {
       clearTimeout(timer);
       lastErr = e;

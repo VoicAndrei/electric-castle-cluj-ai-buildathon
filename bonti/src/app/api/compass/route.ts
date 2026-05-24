@@ -2,6 +2,8 @@ import { generateText } from "ai";
 import { BONTI_LLM, FALLBACK_MODELS, getOpenRouterFor } from "@/lib/openrouter";
 import { buildCompassPrompt } from "@/lib/festival/prompts";
 import { extractCompassJson } from "@/lib/festival/compass-schema";
+import { logEvent } from "@/lib/telemetry/log-event";
+import { readSessionIdFromCookies } from "@/lib/telemetry/session";
 
 export const runtime = "nodejs";
 export const maxDuration = 30;
@@ -13,6 +15,7 @@ export async function POST(req: Request) {
   const query = body.query?.trim();
   if (!query) return new Response("Missing query", { status: 400 });
   const lang = body.lang ?? "en";
+  const startedAt = Date.now();
 
   const prompt = buildCompassPrompt({ query, lang });
 
@@ -32,6 +35,12 @@ export async function POST(req: Request) {
       clearTimeout(timer);
       if (!text?.trim()) throw new Error(`Empty from ${label}`);
       const result = extractCompassJson(text);
+      const sessionId = await readSessionIdFromCookies();
+      void logEvent("compass_query", {
+        query_len: query.length,
+        target_venue_id: result.target_id ?? null,
+        latency_ms: Date.now() - startedAt,
+      }, sessionId);
       return Response.json(result);
     } catch (e) {
       clearTimeout(timer);

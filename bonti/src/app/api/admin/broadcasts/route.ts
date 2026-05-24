@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { requireAdmin, AdminAuthError } from "@/lib/admin/require-admin";
+import { logEvent } from "@/lib/telemetry/log-event";
 
 export const runtime = "nodejs";
 export const maxDuration = 10;
@@ -69,6 +70,12 @@ export async function POST(req: Request) {
     });
   }
 
+  void logEvent("broadcast_sent", {
+    broadcast_id: data.id,
+    urgency: body.urgency,
+    has_target_venue: !!body.target_venue_id,
+    language: "en+ro",
+  });
   return Response.json({ id: data.id });
 }
 

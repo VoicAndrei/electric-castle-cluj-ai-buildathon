@@ -23,3 +23,8 @@ export async function getOrCreateSessionId(): Promise<string> {
   }
   return id;
 }
+
+export async function readSessionIdFromCookies(): Promise<string | undefined> {
+  const store = await cookies();
+  return store.get(SESSION_COOKIE_NAME)?.value;
+}

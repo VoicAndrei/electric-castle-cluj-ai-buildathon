@@ -7,6 +7,8 @@ import {
   buildBontiInFestivalSystemPrompt,
 } from "@/lib/prompts/bonti-system";
 import type { ChatMessage, Lang, Mode } from "@/types/chat";
+import { logEvent } from "@/lib/telemetry/log-event";
+import { readSessionIdFromCookies } from "@/lib/telemetry/session";
 
 export const runtime = "nodejs";
 
@@ -99,6 +101,13 @@ export async function POST(req: Request) {
       });
       const reply = text?.trim();
       if (reply) {
+        const sessionId = await readSessionIdFromCookies();
+        void logEvent("chat_message", {
+          user_message_len: latest.content.length,
+          response_len: reply.length,
+          retrieved_chunk_count: chunks.length,
+          locale: lang === "ro" ? "ro" : "en",
+        }, sessionId);
         return new Response(reply, {
           status: 200,
           headers: { "content-type": "text/plain; charset=utf-8" },

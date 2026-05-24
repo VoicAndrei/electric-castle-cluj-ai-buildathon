@@ -5,6 +5,8 @@ import { parseFreeform } from "@/lib/music-match/freeform";
 import { matchToLineup } from "@/lib/music-match/match-llm";
 import { hashUrl, getCachedMatch, saveMatch } from "@/lib/music-match/cache";
 import type { Lang } from "@/types/chat";
+import { logEvent } from "@/lib/telemetry/log-event";
+import { readSessionIdFromCookies } from "@/lib/telemetry/session";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -65,5 +67,12 @@ export async function POST(req: Request) {
 
   const output = await matchToLineup({ lang, normalized });
   await saveMatch(supabase, { urlHash: cacheKey, source, input: normalized, output });
+  const sessionId = await readSessionIdFromCookies();
+  void logEvent("match_completed", {
+    artists_count: (output.picks?.length ?? 0) + (output.skips?.length ?? 0),
+    top_artist: output.picks?.[0]?.artist ?? null,
+    top_score: null,
+    persona: null,
+  }, sessionId);
   return Response.json(output);
 }
