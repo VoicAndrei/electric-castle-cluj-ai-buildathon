@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactNode } from "react";
 import Image from "next/image";
 import { TransformWrapper, TransformComponent, useControls } from "react-zoom-pan-pinch";
 
@@ -17,6 +18,12 @@ type Props = {
   /** Reserved for future use — kept in API so Group page compiles. */
   highlight?: string;
   routeFrom?: { x: number; y: number };
+  /**
+   * Optional overlay rendered inside the same transformed canvas as the pins.
+   * Use this for route lines, custom pins, or any content that should pan/zoom
+   * with the map. Sits *above* the default pins in z-order.
+   */
+  overlay?: ReactNode;
   className?: string;
 };
 
@@ -42,7 +49,7 @@ function ZoomControls() {
  * and drag-to-pan all work. Pin DOM lives inside the transformed element so
  * pins move + scale with the map.
  */
-export function VenueMap({ pins = [], className }: Props) {
+export function VenueMap({ pins = [], overlay, className }: Props) {
   return (
     <div
       className={[
@@ -100,6 +107,7 @@ export function VenueMap({ pins = [], className }: Props) {
                 </div>
               );
             })}
+            {overlay}
           </div>
         </TransformComponent>
       </TransformWrapper>
