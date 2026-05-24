@@ -17,9 +17,10 @@ export type FestivalState = {
   maria: Persona;
   friends: Persona[];
   pings: StoredPing[];
+  silentPingIds: string[];
   group_meeting?: { point_id: string; eta_min: number; reason: string };
 
-  appendPing: (p: SeededPing) => void;
+  appendPing: (p: SeededPing, opts?: { silent?: boolean }) => void;
   applyGroupConverge: (r: GroupConvergeResult) => void;
   markAllPingsRead: () => void;
   reset: () => void;
@@ -27,10 +28,11 @@ export type FestivalState = {
 
 export type FestivalStoreApi = UseBoundStore<StoreApi<FestivalState>>;
 
-const seed = (): Pick<FestivalState, "maria" | "friends" | "pings"> => ({
+const seed = (): Pick<FestivalState, "maria" | "friends" | "pings" | "silentPingIds"> => ({
   maria: { ...MARIA },
   friends: FRIENDS.map(f => ({ ...f })),
   pings: SEEDED_PINGS.map(p => ({ ...p, read: false, received_at: p.fires_at })),
+  silentPingIds: [],
 });
 
 // Cookie-backed storage using document.cookie (24h TTL).
@@ -54,16 +56,29 @@ const cookieStorage = {
 export function createFestivalStore(): FestivalStoreApi {
   return create<FestivalState>()(
     persist(
-      (set, get) => ({
+      (set) => ({
         ...seed(),
 
-        appendPing: (p) =>
-          set((state) => ({
-            pings: [
-              { ...p, read: false, received_at: new Date().toISOString() },
-              ...state.pings,
-            ],
-          })),
+        appendPing: (p, opts) =>
+          set((state) => {
+            const alreadyPresent = state.pings.some(existing => existing.id === p.id);
+            if (alreadyPresent) {
+              if (opts?.silent && !state.silentPingIds.includes(p.id)) {
+                return { silentPingIds: [...state.silentPingIds, p.id] };
+              }
+              return {};
+            }
+            const next: Partial<FestivalState> = {
+              pings: [
+                { ...p, read: false, received_at: new Date().toISOString() },
+                ...state.pings,
+              ],
+            };
+            if (opts?.silent) {
+              next.silentPingIds = [...state.silentPingIds, p.id];
+            }
+            return next;
+          }),
 
         applyGroupConverge: (r) =>
           set((state) => ({
@@ -85,6 +100,8 @@ export function createFestivalStore(): FestivalStoreApi {
           friends: s.friends,
           pings: s.pings,
           group_meeting: s.group_meeting,
+          // silentPingIds intentionally excluded — runtime-only. After a
+          // reload, broadcasts re-hydrate via useBroadcastsRealtime.
         }),
       },
     ),
