@@ -7,18 +7,22 @@ import { ArtistSheet } from "@/components/artist-sheet";
 import { useLineupRealtime, type LineupRow as Row } from "@/hooks/use-lineup-realtime";
 import { useEventLogger } from "@/hooks/use-event-logger";
 import { createClient } from "@/lib/supabase/client";
+import type { MatchOutput } from "@/lib/music-match/match-schema";
 
 const DAYS: Row["day"][] = ["Thursday", "Friday", "Saturday", "Sunday"];
 
-type MatchOutput = {
-  picks: { artist: string }[];
-  skips: { artist: string }[];
+// The stored music_matches row carries the LLM `output` (intro/picks/skips)
+// and the `input` (the listener's normalized playlist). We hand both to
+// ArtistSheet so the artist-tap blurb can personalize against the actual
+// top artists from the listener's library.
+type StoredMatch = MatchOutput & {
+  input?: { artists?: { name: string; frequency?: number }[] };
 };
 
 export function LineupClient({ initial }: { initial: Row[] }) {
   const { rows, flashIds } = useLineupRealtime(initial);
   const [day, setDay] = useState<Row["day"]>("Saturday");
-  const [match, setMatch] = useState<MatchOutput | null>(null);
+  const [match, setMatch] = useState<StoredMatch | null>(null);
   const [openRow, setOpenRow] = useState<Row | null>(null);
   const [stageFilter, setStageFilter] = useState<string>("all");
   const [artistQuery, setArtistQuery] = useState("");
@@ -28,12 +32,14 @@ export function LineupClient({ initial }: { initial: Row[] }) {
   useEffect(() => {
     const sb = createClient();
     sb.from("music_matches")
-      .select("output, created_at")
+      .select("output, input, created_at")
       .order("created_at", { ascending: false })
       .limit(1)
       .maybeSingle()
       .then(({ data }) => {
-        if (data?.output) setMatch(data.output as MatchOutput);
+        if (data?.output) {
+          setMatch({ ...(data.output as MatchOutput), input: data.input ?? undefined });
+        }
       });
   }, []);
 
@@ -185,7 +191,11 @@ export function LineupClient({ initial }: { initial: Row[] }) {
         ))}
       </div>
 
-      <ArtistSheet entry={openRow ? { artist: openRow.artist_name, day: openRow.day, stage: openRow.stage, ec_tags: openRow.ec_tags, genres: openRow.genres } : null} onClose={() => setOpenRow(null)} />
+      <ArtistSheet
+        entry={openRow ? { artist: openRow.artist_name, day: openRow.day, stage: openRow.stage, ec_tags: openRow.ec_tags, genres: openRow.genres } : null}
+        match={match}
+        onClose={() => setOpenRow(null)}
+      />
     </>
   );
 }

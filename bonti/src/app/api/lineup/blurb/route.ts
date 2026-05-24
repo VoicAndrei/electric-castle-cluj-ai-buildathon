@@ -1,6 +1,6 @@
 import { generateText } from "ai";
 import { BONTI_LLM, FALLBACK_MODELS, getOpenRouterFor } from "@/lib/openrouter";
-import { buildBlurbPrompt } from "@/lib/festival/prompts";
+import { buildBlurbPrompt, type BlurbLibraryContext } from "@/lib/festival/prompts";
 import { getCachedBlurb, saveBlurb } from "@/lib/festival/blurb-cache";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { LINEUP } from "@/data/lineup";
@@ -8,17 +8,34 @@ import { LINEUP } from "@/data/lineup";
 export const runtime = "nodejs";
 export const maxDuration = 30;
 
-type Body = { artist?: string; lang?: "en" | "ro" };
+type Body = {
+  artist?: string;
+  lang?: "en" | "ro";
+  // When the caller has the listener's matched playlist context, pass it
+  // here to get a personalized "does this artist fit me?" line instead of
+  // the generic artist blurb. We bypass the blurb cache for personalized
+  // calls — different listeners would otherwise overwrite each other's
+  // cached entry for the same artist.
+  library?: BlurbLibraryContext;
+};
 
 export async function POST(req: Request) {
   const body = (await req.json()) as Body;
   const artist = body.artist?.trim();
   if (!artist) return new Response("Missing artist", { status: 400 });
   const lang = body.lang ?? "en";
+  const library = body.library;
 
   const sb = createAdminClient();
-  const cached = await getCachedBlurb(sb, artist, lang);
-  if (cached) return new Response(cached, { headers: { "content-type": "text/plain; charset=utf-8" } });
+
+  if (!library) {
+    const cached = await getCachedBlurb(sb, artist, lang);
+    if (cached) {
+      return new Response(cached, {
+        headers: { "content-type": "text/plain; charset=utf-8" },
+      });
+    }
+  }
 
   const row = LINEUP.find(l => l.artist.toLowerCase() === artist.toLowerCase());
   if (!row) return new Response("Unknown artist", { status: 404 });
@@ -29,6 +46,7 @@ export async function POST(req: Request) {
     day: row.day,
     ec_tags: row.ec_tags,
     lang,
+    library,
   });
 
   const candidates: Array<{ model: ReturnType<typeof getOpenRouterFor>; label: string }> = [
@@ -47,7 +65,9 @@ export async function POST(req: Request) {
       clearTimeout(timer);
       const blurb = text?.trim();
       if (!blurb) throw new Error(`Empty from ${label}`);
-      await saveBlurb(sb, row.artist, lang, blurb);
+      // Only cache the non-personalized variant — personalized lines depend
+      // on each listener's library and would otherwise collide on cache key.
+      if (!library) await saveBlurb(sb, row.artist, lang, blurb);
       return new Response(blurb, { headers: { "content-type": "text/plain; charset=utf-8" } });
     } catch (e) {
       clearTimeout(timer);

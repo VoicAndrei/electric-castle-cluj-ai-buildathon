@@ -5,8 +5,52 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useEventLogger } from "@/hooks/use-event-logger";
 import type { LineupEntry } from "@/data/lineup-static";
+import type { MatchOutput } from "@/lib/music-match/match-schema";
+import type { BlurbLibraryContext } from "@/lib/festival/prompts";
 
-export function ArtistSheet({ entry, onClose }: { entry: LineupEntry | null; onClose: () => void }) {
+// Caller-side input for the personalized blurb. We accept a `match` object
+// shaped like the latest /api/match output (the lineup page already loads
+// it for the green/red overlays) and translate it into the BlurbLibraryContext
+// shape the prompt expects. Top artists come from the picks list — those
+// are the EC artists the listener's playlist already lined up with, which
+// in practice doubles as a strong taste signal for bridging to other acts.
+type ArtistMatch = MatchOutput & { input?: { artists?: { name: string; frequency?: number }[] } };
+
+function buildLibraryContext(
+  artist: string,
+  match: ArtistMatch | null,
+): BlurbLibraryContext | undefined {
+  if (!match) return undefined;
+  const picks = match.picks ?? [];
+  const skips = match.skips ?? [];
+  const verdict: BlurbLibraryContext["verdict"] = picks.some(
+    p => p.artist.toLowerCase() === artist.toLowerCase(),
+  )
+    ? "pick"
+    : skips.some(s => s.artist.toLowerCase() === artist.toLowerCase())
+      ? "skip"
+      : "unknown";
+
+  // Prefer the raw playlist's top artists (real listening signal). Fall
+  // back to the /match picks if the stored row didn't carry the input.
+  const fromInput = match.input?.artists?.slice(0, 10).map(a => a.name);
+  const topArtists =
+    fromInput && fromInput.length > 0
+      ? fromInput
+      : picks.slice(0, 8).map(p => p.artist);
+
+  return { topArtists, verdict };
+}
+
+export function ArtistSheet({
+  entry,
+  match,
+  onClose,
+}: {
+  entry: LineupEntry | null;
+  match?: ArtistMatch | null;
+  onClose: () => void;
+}) {
   const log = useEventLogger();
   const [blurb, setBlurb] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -24,10 +68,11 @@ export function ArtistSheet({ entry, onClose }: { entry: LineupEntry | null; onC
   useEffect(() => {
     if (!entry) return;
     const controller = new AbortController();
+    const library = buildLibraryContext(entry.artist, match ?? null);
     fetch("/api/lineup/blurb", {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ artist: entry.artist, lang: "en" }),
+      body: JSON.stringify({ artist: entry.artist, lang: "en", library }),
       signal: controller.signal,
     })
       .then(r => r.ok ? r.text() : Promise.reject(new Error(`HTTP ${r.status}`)))
