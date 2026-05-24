@@ -18,18 +18,20 @@ export type SeededPing = {
 
 export const DEMO_NOW = new Date("2026-07-18T21:43:00+03:00"); // Saturday, EC
 
+// Coordinates are percentages-times-ten (0..1000) over the EC11 map image
+// at /public/ec-map.png. Calibrated against the published EC11 isometric map.
 export const MARIA: Persona = {
   id: "maria",
   name: "Maria",
   avatar_emoji: "🦋",
-  coords: { x: 540, y: 380 }, // at Beer Garden North
-  last_activity: "at Beer Garden · just now",
+  coords: { x: 500, y: 600 }, // Royal Foodcourt
+  last_activity: "at Royal Foodcourt · just now",
 };
 
 export const FRIENDS: Persona[] = [
-  { id: "alex",   name: "Alex",   avatar_emoji: "🐺", coords: { x: 360, y: 560 }, last_activity: "at Booha · 4 min ago" },
-  { id: "ioana",  name: "Ioana",  avatar_emoji: "🦊", coords: { x: 500, y: 320 }, last_activity: "near Main · 2 min ago" },
-  { id: "andrei", name: "Andrei", avatar_emoji: "🐻", coords: { x: 480, y: 660 }, last_activity: "at Food Court · 6 min ago" },
+  { id: "alex",   name: "Alex",   avatar_emoji: "🐺", coords: { x: 300, y: 620 }, last_activity: "at Booha · 4 min ago" },
+  { id: "ioana",  name: "Ioana",  avatar_emoji: "🦊", coords: { x: 650, y: 250 }, last_activity: "near Main · 2 min ago" },
+  { id: "andrei", name: "Andrei", avatar_emoji: "🐻", coords: { x: 250, y: 720 }, last_activity: "near Backyard · 6 min ago" },
 ];
 
 export const SEEDED_PINGS: SeededPing[] = [
