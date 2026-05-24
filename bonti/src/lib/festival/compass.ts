@@ -31,16 +31,22 @@ export function venueIdForStage(stage: string): string | undefined {
  * common English words inside the query string. When multiple artists
  * match, the longest name wins.
  */
+// Lowercase + Unicode-decompose + collapse anything that isn't a letter or
+// digit to a single space. This keeps the substring check insensitive to
+// punctuation ("olaf?" → " olaf ") and accents ("DIANA CĂLDĂRARU" →
+// "diana caldararu"), so the word-boundary match below catches them.
+function normalize(s: string): string {
+  return ` ${s.toLowerCase().normalize("NFKD").replace(/[^\p{L}\p{N}]+/gu, " ").trim()} `;
+}
+
 export function findArtistInQuery(query: string): LineupEntry | null {
-  const q = ` ${query.toLowerCase().normalize("NFKD")} `;
+  const q = normalize(query);
   let best: LineupEntry | null = null;
   let bestLen = 0;
   for (const entry of LINEUP) {
-    const name = entry.artist.toLowerCase().normalize("NFKD");
+    const name = normalize(entry.artist).trim();
     if (name.length < 3) continue;
     const padded = ` ${name} `;
-    // Word-boundary check via space padding — `q.includes(padded)` ensures
-    // the artist is a standalone token, not a substring inside another word.
     if (q.includes(padded) && name.length > bestLen) {
       best = entry;
       bestLen = name.length;
