@@ -8,6 +8,8 @@ type LineupJson = Array<{
   artist: string;
   day: "Thursday" | "Friday" | "Saturday" | "Sunday";
   stage: string;
+  start_at?: string | null;
+  end_at?: string | null;
   ec_tags: string[];
   genres: string[];
 }>;
@@ -40,6 +42,8 @@ async function main() {
     artist_name: a.artist,
     day: a.day,
     stage: a.stage,
+    start_at: a.start_at ?? null,
+    end_at: a.end_at ?? null,
     ec_tags: a.ec_tags ?? [],
     genres: a.genres ?? [],
     sort_order: i * 10,
