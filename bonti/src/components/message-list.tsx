@@ -4,6 +4,7 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import type { ChatMessage } from "@/types/chat";
 import { BontiAvatar } from "@/components/bonti-avatar";
+import { MatchCard } from "@/components/match-card";
 
 // Locked-down markdown components — only render what the bot actually emits,
 // and force link safety (internal links keep SPA-style; external opens new tab).
@@ -69,23 +70,37 @@ export function MessageList({
 
   return (
     <div className="flex flex-col gap-4">
-      {messages.map((m, i) =>
-        m.role === "user" ? (
-          <div
-            key={i}
-            className="self-end max-w-[80%] bg-bonti-toolbar text-white font-roboto px-4 py-2 rounded-lg whitespace-pre-wrap"
-          >
-            {m.content}
-          </div>
-        ) : (
+      {messages.map((m, i) => {
+        if (m.role === "user") {
+          return (
+            <div
+              key={i}
+              className="self-end max-w-[80%] bg-bonti-toolbar text-white font-roboto px-4 py-2 rounded-lg whitespace-pre-wrap"
+            >
+              {m.content}
+            </div>
+          );
+        }
+        // Assistant message with an inline match — render the card directly
+        // (the card carries its own intro paragraph, so the markdown bubble
+        // would just duplicate it).
+        if (m.match) {
+          return (
+            <div key={i} className="self-start flex items-start gap-2 max-w-[85%]">
+              <BontiAvatar size="sm" animated={false} decorative />
+              <MatchCard result={m.match} />
+            </div>
+          );
+        }
+        return (
           <div key={i} className="self-start flex items-start gap-2 max-w-[85%]">
             <BontiAvatar size="sm" animated={false} decorative />
             <div className="bg-bonti-surface text-bonti-text font-roboto px-4 py-3 rounded-lg border border-black/5">
               <AssistantMarkdown text={m.content} />
             </div>
           </div>
-        ),
-      )}
+        );
+      })}
       {loading && (
         <div className="self-start flex items-start gap-2">
           <BontiAvatar size="sm" decorative />
