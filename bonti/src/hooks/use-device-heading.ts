@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 
 type Permission = "default" | "granted" | "denied" | "unavailable";
 
@@ -12,6 +12,43 @@ type CompassEvent = DeviceOrientationEvent & {
   webkitCompassHeading?: number;
   webkitCompassAccuracy?: number;
 };
+
+// `deviceorientation` is a browser-singleton event. Keep one listener and one
+// heading value at module scope; every hook instance subscribes to the same
+// source so iOS permission granted via one consumer reaches all of them.
+let sharedHeading: number | null = null;
+let listenerAttached = false;
+const subscribers = new Set<() => void>();
+
+function readSharedHeading(): number | null {
+  return sharedHeading;
+}
+
+function subscribeShared(notify: () => void): () => void {
+  subscribers.add(notify);
+  return () => {
+    subscribers.delete(notify);
+  };
+}
+
+function onOrientation(e: DeviceOrientationEvent) {
+  const evt = e as CompassEvent;
+  let next: number | null = null;
+  if (typeof evt.webkitCompassHeading === "number") {
+    next = evt.webkitCompassHeading;
+  } else if (e.absolute && e.alpha !== null) {
+    next = (360 - e.alpha) % 360;
+  }
+  if (next === null || next === sharedHeading) return;
+  sharedHeading = next;
+  subscribers.forEach((notify) => notify());
+}
+
+function attachListenerOnce() {
+  if (listenerAttached || typeof window === "undefined") return;
+  window.addEventListener("deviceorientation", onOrientation, true);
+  listenerAttached = true;
+}
 
 /**
  * Real device compass heading in degrees clockwise from magnetic north
@@ -25,6 +62,10 @@ type CompassEvent = DeviceOrientationEvent & {
  * iOS requires a user gesture to grant permission; the returned
  * `requestPermission` triggers the prompt. On other platforms the hook
  * attaches the listener automatically.
+ *
+ * Heading is shared across all hook instances on the page via a module-level
+ * listener — granting iOS permission from any instance delivers heading to
+ * every consumer, so callers without a permission UI can still receive it.
  */
 export function useDeviceHeading(): {
   heading: number | null;
@@ -32,7 +73,7 @@ export function useDeviceHeading(): {
   supported: boolean;
   requestPermission: () => Promise<void>;
 } {
-  const [heading, setHeading] = useState<number | null>(null);
+  const heading = useSyncExternalStore(subscribeShared, readSharedHeading, readSharedHeading);
   const [permission, setPermission] = useState<Permission>("default");
   const [supported, setSupported] = useState(false);
 
@@ -46,27 +87,10 @@ export function useDeviceHeading(): {
     setSupported(true);
 
     const ios = typeof (window.DeviceOrientationEvent as IOSDeviceOrientationEvent).requestPermission === "function";
-    if (!ios) attach();
-
-    function attach() {
-      window.addEventListener("deviceorientation", onOrientation, true);
+    if (!ios) {
+      attachListenerOnce();
       setPermission("granted");
     }
-
-    function onOrientation(e: DeviceOrientationEvent) {
-      const evt = e as CompassEvent;
-      if (typeof evt.webkitCompassHeading === "number") {
-        setHeading(evt.webkitCompassHeading);
-        return;
-      }
-      if (e.absolute && e.alpha !== null) {
-        setHeading((360 - e.alpha) % 360);
-      }
-    }
-
-    return () => {
-      window.removeEventListener("deviceorientation", onOrientation, true);
-    };
   }, []);
 
   const requestPermission = async () => {
@@ -80,14 +104,7 @@ export function useDeviceHeading(): {
       const result = await ctor.requestPermission();
       setPermission(result === "granted" ? "granted" : "denied");
       if (result === "granted") {
-        window.addEventListener("deviceorientation", (e) => {
-          const evt = e as CompassEvent;
-          if (typeof evt.webkitCompassHeading === "number") {
-            setHeading(evt.webkitCompassHeading);
-          } else if (e.absolute && e.alpha !== null) {
-            setHeading((360 - e.alpha) % 360);
-          }
-        }, true);
+        attachListenerOnce();
       }
     } catch {
       setPermission("denied");
