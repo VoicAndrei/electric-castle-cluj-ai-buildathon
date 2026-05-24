@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { BontiAvatar } from "@/components/bonti-avatar";
 import { AccountChip } from "@/components/account-chip";
 
 type Props = {
@@ -14,7 +13,7 @@ type Props = {
 export function AppHeader({ title, showBack = false, unread = 0 }: Props) {
   const router = useRouter();
   return (
-    <header className="sticky top-0 z-30 bg-bonti-toolbar pt-safe">
+    <header className="sticky top-0 z-30 bg-bonti-red pt-safe">
       <div className="h-[52px] px-4 flex items-center justify-between">
         <div className="w-10 flex items-center">
           {showBack ? (
@@ -27,8 +26,16 @@ export function AppHeader({ title, showBack = false, unread = 0 }: Props) {
               ‹
             </button>
           ) : (
-            <Link href="/app" aria-label="Bonți home">
-              <BontiAvatar size="sm" animated />
+            <Link href="/app" aria-label="Bonți home" className="inline-flex items-center">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/ec-logo.svg"
+                alt=""
+                width={32}
+                height={25}
+                draggable={false}
+                style={{ width: 32, height: 25 }}
+              />
             </Link>
           )}
         </div>

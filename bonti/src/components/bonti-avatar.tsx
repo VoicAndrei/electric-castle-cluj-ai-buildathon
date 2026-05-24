@@ -5,7 +5,10 @@ const PX: Record<Size, number> = { sm: 32, md: 48, lg: 72, xl: 128 };
 export function BontiAvatar({
   size = "md",
   className,
-  animated = true,
+  // `animated` is intentionally accepted but unused — the brand mark is now
+  // a static raster, so the bob animation has been retired. Kept in the
+  // signature so existing callers compile without churn.
+  animated: _animated,
   decorative = false,
 }: {
   size?: Size;
@@ -13,30 +16,24 @@ export function BontiAvatar({
   animated?: boolean;
   decorative?: boolean;
 }) {
+  void _animated;
   const px = PX[size];
   return (
     <span
-      className={[
-        "inline-block shrink-0",
-        animated ? "animate-bonti-bob motion-reduce:animate-none" : "",
-        className,
-      ]
-        .filter(Boolean)
-        .join(" ")}
+      className={["inline-block shrink-0", className].filter(Boolean).join(" ")}
       style={{ width: px, height: px }}
       {...(decorative
         ? { "aria-hidden": true }
         : { role: "img", "aria-label": "Bonți" })}
     >
-      {/* Plain <img> for a static brand SVG — next/image's optimization doesn't apply to SVGs. */}
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
-        src="/bonti-duck.svg"
+        src="/bonti-img.png"
         alt=""
         width={px}
         height={px}
         draggable={false}
-        style={{ width: px, height: px }}
+        style={{ width: px, height: px, objectFit: "contain" }}
       />
     </span>
   );

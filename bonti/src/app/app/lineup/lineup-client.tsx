@@ -20,6 +20,8 @@ export function LineupClient({ initial }: { initial: Row[] }) {
   const [day, setDay] = useState<Row["day"]>("Saturday");
   const [match, setMatch] = useState<MatchOutput | null>(null);
   const [openRow, setOpenRow] = useState<Row | null>(null);
+  const [stageFilter, setStageFilter] = useState<string>("all");
+  const [artistQuery, setArtistQuery] = useState("");
   const log = useEventLogger();
 
   useEffect(() => {
@@ -46,7 +48,33 @@ export function LineupClient({ initial }: { initial: Row[] }) {
     return null;
   };
 
-  const filtered = useMemo(() => rows.filter(r => r.day === day), [rows, day]);
+  // Stage list is derived from the current day's rows so the picker only ever
+  // offers stages that actually have acts that day.
+  const stagesForDay = useMemo(() => {
+    const set = new Set<string>();
+    for (const r of rows) if (r.day === day) set.add(r.stage);
+    return Array.from(set).sort();
+  }, [rows, day]);
+
+  // Reset the stage filter when switching days if the previously selected
+  // stage doesn't exist on the new day — avoids an empty list with no hint.
+  useEffect(() => {
+    if (stageFilter !== "all" && !stagesForDay.includes(stageFilter)) {
+      setStageFilter("all");
+    }
+  }, [stageFilter, stagesForDay]);
+
+  const trimmedArtist = artistQuery.trim().toLowerCase();
+  const filtersActive = stageFilter !== "all" || trimmedArtist.length > 0;
+
+  const filtered = useMemo(() => {
+    return rows.filter(r => {
+      if (r.day !== day) return false;
+      if (stageFilter !== "all" && r.stage !== stageFilter) return false;
+      if (trimmedArtist && !r.artist_name.toLowerCase().includes(trimmedArtist)) return false;
+      return true;
+    });
+  }, [rows, day, stageFilter, trimmedArtist]);
 
   return (
     <>
@@ -67,9 +95,39 @@ export function LineupClient({ initial }: { initial: Row[] }) {
             </button>
           ))}
         </div>
+        <div className="px-4 pt-2 pb-3 flex items-center gap-2">
+          <input
+            type="search"
+            value={artistQuery}
+            onChange={(e) => setArtistQuery(e.target.value)}
+            placeholder="Filter artist…"
+            aria-label="Filter by artist name"
+            className="flex-1 min-w-0 bg-bonti-surface border border-black/10 rounded-lg px-3 py-2 font-roboto text-sm outline-none focus:border-bonti-red"
+          />
+          <select
+            value={stageFilter}
+            onChange={(e) => setStageFilter(e.target.value)}
+            aria-label="Filter by stage"
+            className="bg-bonti-surface border border-black/10 rounded-lg px-2 py-2 font-roboto text-sm outline-none focus:border-bonti-red"
+          >
+            <option value="all">All stages</option>
+            {stagesForDay.map(s => (
+              <option key={s} value={s}>{s}</option>
+            ))}
+          </select>
+          {filtersActive && (
+            <button
+              type="button"
+              onClick={() => { setStageFilter("all"); setArtistQuery(""); }}
+              className="text-xs font-roboto underline text-bonti-text/70 whitespace-nowrap"
+            >
+              Clear
+            </button>
+          )}
+        </div>
       </div>
 
-      {!match && (
+      {!match && !filtersActive && (
         <div className="mx-4 mt-4 bg-bonti-surface border border-black/5 rounded-xl p-3">
           <p className="font-roboto text-sm text-bonti-text">
             Paste a Spotify playlist link in the Bonți chat to color these rows green/red.
@@ -78,6 +136,11 @@ export function LineupClient({ initial }: { initial: Row[] }) {
       )}
 
       <div>
+        {filtersActive && filtered.length === 0 && (
+          <p className="mx-4 mt-6 text-bonti-text/60 text-sm font-roboto">
+            No acts match those filters.
+          </p>
+        )}
         {filtered.map(r => (
           <LineupRow
             key={r.id}
