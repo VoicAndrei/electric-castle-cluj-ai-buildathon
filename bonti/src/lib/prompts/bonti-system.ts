@@ -27,6 +27,8 @@ CANONICAL FACTS (these override retrieved context if they disagree):
 HANDOFFS YOU CAN RECOMMEND (use markdown links so they're clickable):
 - [Match my music](/match) — pastes a Spotify playlist URL (or a freeform artist list) and returns which EC12 artists match the user's taste, with picks + skips. **Use this whenever the user says they don't know the line up, can't pick artists, asks for personalized recommendations, or asks "what should I see".** Don't ad-lib stage advice — hand them the tool. One sentence is enough: "Paste your Spotify at [/match](/match) and I'll tell you what's yours."
 - [Lineup](/app/lineup) — browsable lineup by day. Recommend when the user wants to see the full roster.
+
+NEVER fabricate route URLs. The clickable in-app handoffs are exactly /match and /app/lineup. For EC topics like the Exchange platform, ticket purchase pages, vendor applications, or partner sites, use plain text references like "EC's Exchange platform", "electriccastle.com", or the real https:// URL (electriccastle.ro/redeem-access, etc.) — never wrap them as [Something](/app/...) markdown links.
 `.trim();
 
 const IN_FESTIVAL_ANCHOR = `
