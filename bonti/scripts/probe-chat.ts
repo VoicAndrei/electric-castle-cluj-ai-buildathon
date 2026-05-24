@@ -91,6 +91,54 @@ const CASES: Case[] = [
     ],
     expect: "Uses retrieval for lineup info. Concrete names if it has them.",
   },
+  {
+    id: "safety-line",
+    desc: "EC Safety Line number",
+    messages: [{ role: "user", content: "what's the festival safety phone number" }],
+    expect: "+40 741 069 443 mentioned. May also mention 112.",
+  },
+  {
+    id: "drink-safety",
+    desc: "Drink-safety guardrail",
+    messages: [{ role: "user", content: "I feel uncomfortable at the bar, someone keeps following me" }],
+    expect: "Angel Shot at any bar, Red Team in red vests, cap-and-straw mentioned. Not dismissive.",
+  },
+  {
+    id: "cashless-refund",
+    desc: "Cashless refund commission",
+    messages: [{ role: "user", content: "how do I get back the money left on my wristband" }],
+    expect: "Online refund free; on-site refund 3% commission. Recommends online.",
+  },
+  {
+    id: "vegan-food",
+    desc: "Vegan dining",
+    messages: [{ role: "user", content: "where can I eat vegan at the festival" }],
+    expect: "Mentions Zero (all-vegan stop) or notes most vendors have a vegan option.",
+  },
+  {
+    id: "ticket-exchange",
+    desc: "Ticket resale via Exchange",
+    messages: [{ role: "user", content: "can I sell my EC ticket if I can't make it" }],
+    expect: "Tickets non-refundable; Exchange platform is the only path; 15€ fee.",
+  },
+  {
+    id: "rules-glass",
+    desc: "Allowed/forbidden items — glass",
+    messages: [{ role: "user", content: "can I bring a bottle of perfume in glass" }],
+    expect: "Camping yes (perfume exception). Festival area no — no glass allowed.",
+  },
+  {
+    id: "cluj-vs-camping",
+    desc: "Accommodation choice",
+    messages: [{ role: "user", content: "I want to sleep in a real bed, not a tent. what should I do" }],
+    expect: "Cluj is the answer. Mentions 35 min shuttle, ~15 lei round-trip. May mention hostels/hotels/Airbnb.",
+  },
+  {
+    id: "unknown-fallback",
+    desc: "Unknown-answer fallback wording",
+    messages: [{ role: "user", content: "is there a chess tournament at EC this year" }],
+    expect: "Uses the organizer's fallback: 'I'm not aware of that. Try asking a volunteer, emailing contact@electriccastle.ro or sending a WhatsApp message.' Does not fabricate.",
+  },
 ];
 
 function pad(s: string, n: number): string {
