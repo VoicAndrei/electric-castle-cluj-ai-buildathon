@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { BontiAvatar } from "@/components/bonti-avatar";
 import { AccountChip } from "@/components/account-chip";
 
 type Props = {
@@ -27,8 +26,16 @@ export function AppHeader({ title, showBack = false, unread = 0 }: Props) {
               ‹
             </button>
           ) : (
-            <Link href="/app" aria-label="Bonți home">
-              <BontiAvatar size="sm" animated />
+            <Link href="/app" aria-label="Bonți home" className="inline-flex items-center">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/ec-logo.svg"
+                alt=""
+                width={32}
+                height={25}
+                draggable={false}
+                style={{ width: 32, height: 25 }}
+              />
             </Link>
           )}
         </div>
