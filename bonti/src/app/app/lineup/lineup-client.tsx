@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import Link from "next/link";
 import { AppHeader } from "@/components/app-header";
 import { LineupRow } from "@/components/lineup-row";
 import { ArtistSheet } from "@/components/artist-sheet";
@@ -73,7 +72,7 @@ export function LineupClient({ initial }: { initial: Row[] }) {
       {!match && (
         <div className="mx-4 mt-4 bg-bonti-surface border border-black/5 rounded-xl p-3">
           <p className="font-roboto text-sm text-bonti-text">
-            Match your music to get green/red on these rows. <Link href="/match" className="text-bonti-red underline">→</Link>
+            Paste a Spotify playlist link in the Bonți chat to color these rows green/red.
           </p>
         </div>
       )}

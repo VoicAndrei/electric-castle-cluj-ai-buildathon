@@ -1,14 +1,8 @@
-import { BontiHeader } from "@/components/bonti-header";
-import { ChatShell } from "@/components/chat-shell";
+import { redirect } from "next/navigation";
 
+// The pre-festival landing and the in-festival surface have collapsed into
+// a single /app URL whose contents flip on the on-site signal. Anything
+// hitting the bare domain goes straight there.
 export default function Home() {
-  // h-[100dvh] (dynamic viewport height) so the input row lands at the
-  // *actual* visible bottom on mobile — 100vh would put it under the
-  // address bar on iOS / Chrome mobile.
-  return (
-    <main className="h-[100dvh] bg-bonti-bg flex flex-col overflow-hidden">
-      <BontiHeader />
-      <ChatShell layout="fill" />
-    </main>
-  );
+  redirect("/app");
 }

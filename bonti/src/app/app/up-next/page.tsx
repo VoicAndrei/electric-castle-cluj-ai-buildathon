@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
 import { AppHeader } from "@/components/app-header";
 import { createClient } from "@/lib/supabase/client";
 
@@ -94,7 +93,7 @@ export default function UpNextPage() {
           </p>
         ) : (
           <p className="text-bonti-text/60 text-[11px] font-roboto mt-1">
-            <Link href="/match" className="underline">Match your music</Link> for picks tuned to your taste.
+            Paste a Spotify playlist link in the Bonți chat to tune these picks to your taste.
           </p>
         )}
       </div>

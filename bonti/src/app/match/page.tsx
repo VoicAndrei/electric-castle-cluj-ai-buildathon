@@ -1,34 +1,9 @@
-"use client";
+import { redirect } from "next/navigation";
 
-import { useState } from "react";
-import { BontiHeader } from "@/components/bonti-header";
-import { MatchForm } from "@/components/match-form";
-import { MatchCard } from "@/components/match-card";
-import type { MatchOutput } from "@/lib/music-match/match-schema";
-import type { Lang } from "@/types/chat";
-
-export default function MatchPage() {
-  const [lang] = useState<Lang>("en");
-  const [result, setResult] = useState<MatchOutput | null>(null);
-  const [loading, setLoading] = useState(false);
-
-  return (
-    <main className="min-h-screen bg-bonti-bg flex flex-col">
-      <BontiHeader />
-      <section className="flex-1 mx-auto w-full max-w-2xl px-4 py-8 space-y-6">
-        <header className="space-y-2">
-          <h1 className="text-2xl font-semibold text-bonti-ink">Match your music to EC12</h1>
-          <p className="text-sm text-bonti-ink/70">
-            Paste a playlist. Bonți tells you what&apos;s yours at the festival.
-          </p>
-        </header>
-        <MatchForm lang={lang} onResult={setResult} onLoadingChange={setLoading} />
-        {loading ? (
-          <p className="text-sm text-bonti-ink/60">Bonți is listening…</p>
-        ) : result ? (
-          <MatchCard result={result} />
-        ) : null}
-      </section>
-    </main>
-  );
+// /match used to host a standalone Spotify-playlist matcher. The same
+// flow now runs inline in the /app chat — paste a Spotify URL into the
+// conversation and the picks render as a chat message. The route stays
+// as a redirect so old bookmarks/links don't 404.
+export default function MatchRedirect() {
+  redirect("/app");
 }

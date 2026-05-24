@@ -5,13 +5,18 @@ import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { BontiAvatar } from "@/components/bonti-avatar";
 import { ChatShell } from "@/components/chat-shell";
+import { useOnSiteMode } from "@/lib/festival/use-on-site-mode";
 
+// Chat affordance for the festival surface. Rendered by AppLayout on every
+// /app/* route, but only visible when the session is on-site — off-site
+// users have the chat as the /app page itself, so a FAB would be redundant.
 export function BontiChatFAB() {
   const pathname = usePathname();
+  const { onSite } = useOnSiteMode();
   const [open, setOpen] = useState(false);
 
-  // Show on every /app surface — chat is one tap away above the fixed tab bar.
   if (!pathname.startsWith("/app")) return null;
+  if (onSite !== true) return null;
 
   return (
     <>
