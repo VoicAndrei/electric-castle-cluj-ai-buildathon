@@ -203,6 +203,15 @@ h1, h2, h3, h4, h5 {
   animation: bonti-bob 2.2s ease-in-out infinite;
 }
 
+@keyframes bonti-shimmer {
+  0%, 100% { background-color: transparent; }
+  20%, 60% { background-color: rgba(255, 230, 102, 0.45); }
+}
+
+.animate-bonti-shimmer {
+  animation: bonti-shimmer 1.2s ease-in-out 1;
+}
+
 @layer utilities {
   .pt-safe { padding-top: env(safe-area-inset-top); }
   .pb-safe { padding-bottom: env(safe-area-inset-bottom); }
