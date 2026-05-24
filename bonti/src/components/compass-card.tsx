@@ -54,6 +54,11 @@ export function CompassCard({ target, from, reason, line_state, bontiLine }: Pro
           </p>
         </div>
       </div>
+      {needsPermission && (
+        <p className="mt-2 text-bonti-text/60 font-roboto text-xs italic">
+          Tap <span className="not-italic font-medium">Enable live compass</span> to point your phone at the target.
+        </p>
+      )}
       <p className="text-bonti-text font-roboto text-sm mt-3 leading-snug">{bontiLine}</p>
 
       {needsPermission && (
