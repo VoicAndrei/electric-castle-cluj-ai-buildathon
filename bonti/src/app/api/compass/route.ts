@@ -2,6 +2,8 @@ import { generateText } from "ai";
 import { BONTI_LLM, FALLBACK_MODELS, getOpenRouterFor } from "@/lib/openrouter";
 import { buildCompassPrompt } from "@/lib/festival/prompts";
 import { extractCompassJson } from "@/lib/festival/compass-schema";
+import { findArtistInQuery, venueIdForStage, findVenueById } from "@/lib/festival/compass";
+import { formatLocalRange } from "@/lib/festival/time";
 import { logEvent } from "@/lib/telemetry/log-event";
 import { readSessionIdFromCookies } from "@/lib/telemetry/session";
 
@@ -16,6 +18,31 @@ export async function POST(req: Request) {
   if (!query) return new Response("Missing query", { status: 400 });
   const lang = body.lang ?? "en";
   const startedAt = Date.now();
+
+  // Artist lookup short-circuits the LLM: if the query mentions an artist
+  // from the lineup, resolve straight to their stage's venue + set time so
+  // the compass directions are grounded in actual schedule data instead of
+  // an LLM guess. The route map UI is happy with the same {target_id,
+  // reason, line_state} shape.
+  const artistMatch = findArtistInQuery(query);
+  if (artistMatch) {
+    const venueId = venueIdForStage(artistMatch.stage);
+    const venue = venueId ? findVenueById(venueId) : undefined;
+    if (venue) {
+      const timeRange = formatLocalRange(artistMatch.start_at, artistMatch.end_at);
+      const reason = lang === "ro"
+        ? `${artistMatch.artist} cântă pe ${artistMatch.stage}, ${artistMatch.day} ${timeRange}.`
+        : `${artistMatch.artist} is on the ${artistMatch.stage}, ${artistMatch.day} ${timeRange}.`;
+      const lineState = lang === "ro" ? "Vezi orarul" : "See schedule";
+      const sessionId = await readSessionIdFromCookies();
+      void logEvent("compass_query", {
+        query_len: query.length,
+        target_venue_id: venue.id,
+        latency_ms: Date.now() - startedAt,
+      }, sessionId);
+      return Response.json({ target_id: venue.id, reason, line_state: lineState });
+    }
+  }
 
   const prompt = buildCompassPrompt({ query, lang });
 
