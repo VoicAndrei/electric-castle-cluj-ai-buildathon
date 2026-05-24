@@ -176,20 +176,28 @@ export function LineupClient({ initial }: { initial: Row[] }) {
             </button>
           )}
         </div>
-        {match && pickSet.size > 0 && (
+        {match && (
           <div className="px-4 pb-3 -mt-1 flex">
             <button
               type="button"
-              onClick={() => setMatchesOnly(v => !v)}
+              onClick={() => pickSet.size > 0 && setMatchesOnly(v => !v)}
               aria-pressed={matchesOnlyEffective}
+              disabled={pickSet.size === 0}
+              title={
+                pickSet.size === 0
+                  ? "Your latest Bonți match didn't surface any picks yet."
+                  : undefined
+              }
               className={[
                 "rounded-full px-3 py-1 font-sofia uppercase tracking-wide text-[11px] border",
-                matchesOnlyEffective
-                  ? "bg-green-100 border-green-300 text-green-800"
-                  : "bg-bonti-surface border-black/10 text-bonti-text",
+                pickSet.size === 0
+                  ? "bg-bonti-surface border-black/10 text-bonti-text/40 cursor-not-allowed"
+                  : matchesOnlyEffective
+                    ? "bg-green-100 border-green-300 text-green-800"
+                    : "bg-bonti-surface border-black/10 text-bonti-text",
               ].join(" ")}
             >
-              🟢 Matches only {matchesOnlyEffective ? "· on" : ""}
+              🟢 Matches only{matchesOnlyEffective ? " · on" : ""}
             </button>
           </div>
         )}
