@@ -1,7 +1,6 @@
 "use client";
 
 import { VenueMap } from "@/components/venue-map";
-import { useDeviceHeading } from "@/hooks/use-device-heading";
 import { distanceMeters, formatWalkTime } from "@/lib/festival/compass";
 import { emojiForKind } from "@/lib/festival/venue-emoji";
 import { MARIA } from "@/data/festival-state";
@@ -10,6 +9,7 @@ import type { VenuePoint } from "@/data/venue";
 type Props = {
   target: VenuePoint;
   from: { x: number; y: number };
+  heading: number | null;
 };
 
 /**
@@ -18,16 +18,20 @@ type Props = {
  *   - SVG line from user → target (dashed, animated flow)
  *   - User pin (Maria's avatar emoji) and target pin (kind emoji)
  *   - Distance + walk-time pill anchored at the midpoint
- *   - North-rose in the corner that counter-rotates with phone heading
+ *   - North-rose in the corner that counter-rotates with phone heading (when supplied)
  *
  * The SVG uses viewBox="0 0 1000 1000" preserveAspectRatio="none" so it
  * stretches across the same letterboxed canvas that the pins percent-position
  * themselves over. That means line endpoints can be written as raw coord
  * values without conversion.
+ *
+ * `heading` is a prop (not consumed from useDeviceHeading directly) so the
+ * compass page can share a single hook instance with CompassCard. iOS only
+ * grants deviceorientation permission via an explicit user gesture, and
+ * that gesture lives in CompassCard — without lifting state, this
+ * component would never receive a heading on iOS.
  */
-export function CompassRouteMap({ target, from }: Props) {
-  const { heading } = useDeviceHeading();
-
+export function CompassRouteMap({ target, from, heading }: Props) {
   const distance = distanceMeters(from, target.coords);
   const midX = (from.x + target.coords.x) / 2;
   const midY = (from.y + target.coords.y) / 2;
