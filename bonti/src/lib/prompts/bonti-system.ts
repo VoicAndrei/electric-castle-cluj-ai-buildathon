@@ -1,6 +1,21 @@
 import { VOICE_RULES } from "./bonti-voice-rules";
 import { FEW_SHOT } from "./bonti-fewshot";
+import { LINEUP } from "@/data/lineup-static";
+import { formatLocalRange } from "@/lib/festival/time";
 import type { Lang, RetrievedChunk } from "@/types/chat";
+
+// Inline schedule fact-sheet so chat answers about set times stay grounded
+// in the EC25 spreadsheet instead of relying on retrieval (the lineup
+// isn't in the KB) or the model's pre-training. ~220 lines, evaluated once
+// at module load. Times come pre-localized to Europe/Bucharest via
+// formatLocalRange so the model doesn't have to do timezone math.
+const LINEUP_SCHEDULE = (() => {
+  const lines = LINEUP.map((e) => {
+    const range = formatLocalRange(e.start_at, e.end_at);
+    return `- ${e.artist} | ${e.day} ${range} @ ${e.stage}`;
+  });
+  return `EC25 LINE-UP SCHEDULE (authoritative — use these exact day/time/stage values when answering "when does X play" or "where is X"):\n${lines.join("\n")}`;
+})();
 
 export type SystemPromptInput = {
   retrievedChunks: RetrievedChunk[];
@@ -55,7 +70,7 @@ export function buildBontiSystemPrompt(input: SystemPromptInput): string {
 
   const langInstruction = `\nReply in ${lang === "ro" ? "Romanian" : "English"} unless the user clearly writes in the other language.\n`;
 
-  return [IDENTITY, VOICE_RULES, contextBlock, FEW_SHOT, langInstruction]
+  return [IDENTITY, VOICE_RULES, LINEUP_SCHEDULE, contextBlock, FEW_SHOT, langInstruction]
     .filter(Boolean)
     .join("\n\n");
 }
@@ -72,7 +87,7 @@ export function buildBontiInFestivalSystemPrompt(input: SystemPromptInput): stri
 
   const langInstruction = `\nReply in ${lang === "ro" ? "Romanian" : "English"} unless the user clearly writes in the other language.\n`;
 
-  return [IDENTITY, IN_FESTIVAL_ANCHOR, VOICE_RULES, contextBlock, FEW_SHOT, langInstruction]
+  return [IDENTITY, IN_FESTIVAL_ANCHOR, VOICE_RULES, LINEUP_SCHEDULE, contextBlock, FEW_SHOT, langInstruction]
     .filter(Boolean)
     .join("\n\n");
 }
