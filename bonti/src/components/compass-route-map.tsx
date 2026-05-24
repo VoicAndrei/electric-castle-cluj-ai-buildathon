@@ -61,6 +61,7 @@ export function CompassRouteMap({ target, from, heading }: Props) {
           strokeWidth={6}
           strokeLinecap="round"
           strokeDasharray="14 18"
+          strokeDashoffset={0}
           className="animate-route-flow"
         />
       </svg>
