@@ -1,6 +1,7 @@
 import { AppTabbar } from "@/components/app-tabbar";
 import { GlobalPingToast } from "@/components/global-ping-toast";
 import { BontiChatFAB } from "@/components/bonti-chat-fab";
+import { BroadcastsRealtimeMount } from "@/components/broadcasts-realtime-mount";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -10,6 +11,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       <div className="mx-auto w-full max-w-[480px]">
         <AppTabbar />
       </div>
+      <BroadcastsRealtimeMount lang="ro" />
       <GlobalPingToast />
       <BontiChatFAB />
     </div>

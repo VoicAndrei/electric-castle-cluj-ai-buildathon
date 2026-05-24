@@ -67,19 +67,6 @@ export const SEEDED_PINGS: SeededPing[] = [
   },
 ];
 
-export const SEEDED_BROADCASTS: { ts: string; en: string; ro: string }[] = [
-  {
-    ts: "2026-07-18T19:45:00+03:00",
-    en: "⚡ Road back is full after Timberlake. Shuttle's paused till 3. Stay at the festival — set at The Beach, after at Hangar.",
-    ro: "⚡ Drumul înapoi e plin după Timberlake. Shuttle-ul revine la 3. Stai la festival — e un set la The Beach și un after la Hangar.",
-  },
-  {
-    ts: "2026-07-18T20:30:00+03:00",
-    en: "Booha set running 10 min late.",
-    ro: "Booha întârzie 10 minute.",
-  },
-];
-
 // The Glass Animals ping fired live 8s after /app mount uses DEMO_NOW + 8s as fires_at.
 // Its body is built dynamically (so we can localize); the static template lives here.
 export const LIVE_GLASS_ANIMALS_PING: Omit<SeededPing, "fires_at"> = {

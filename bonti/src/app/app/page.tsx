@@ -31,7 +31,7 @@ export default function AppHome() {
     <>
       <AppHeader title="Bonți" unread={unread} />
       <FestivalHero />
-      <LiveTicker lang="en" />
+      <LiveTicker />
       <AppTileGrid />
       <ChatShell mode="in_festival" />
     </>
