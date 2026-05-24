@@ -12,6 +12,7 @@ import type { Mode } from "@/types/chat";
 // chatbot can answer them without a map context.
 const PRE_TICKET_PROMPTS = [
   "First time at the Castle — help me plan",
+  "When does Justin Timberlake go live?",
   "How much cash do I need for 4 days?",
   "What's an angel shot?",
   "Is camping or hotel a better call?",
@@ -19,6 +20,7 @@ const PRE_TICKET_PROMPTS = [
 ];
 
 const IN_FESTIVAL_PROMPTS = [
+  "When does Justin Timberlake go live?",
   "What's an angel shot?",
   "Cashless top-up — how does it work?",
   "Re-entry rules at the gate?",
