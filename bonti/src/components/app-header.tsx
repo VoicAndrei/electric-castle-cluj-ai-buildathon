@@ -13,7 +13,7 @@ type Props = {
 export function AppHeader({ title, showBack = false, unread = 0 }: Props) {
   const router = useRouter();
   return (
-    <header className="sticky top-0 z-30 bg-bonti-toolbar pt-safe">
+    <header className="sticky top-0 z-30 bg-bonti-red pt-safe">
       <div className="h-[52px] px-4 flex items-center justify-between">
         <div className="w-10 flex items-center">
           {showBack ? (
