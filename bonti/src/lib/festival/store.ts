@@ -91,9 +91,13 @@ export function createFestivalStore(): FestivalStoreApi {
           }),
 
         applyGroupConverge: (r) =>
-          set((state) => ({
-            maria: { ...state.maria, coords: r.target_coords },
-            friends: state.friends.map(f => ({ ...f, coords: r.target_coords })),
+          set(() => ({
+            // Intentionally not teleporting Maria + friends to the meeting
+            // point. The route map already draws the path from each pin to
+            // the meeting marker; snapping every pin onto the marker hid
+            // that signal and made the demo feel buggy on reload (persisted
+            // teleported coords would briefly pop back to seed values and
+            // then jump to the marker again).
             group_meeting: {
               point_id: r.meeting_point_id,
               coords: r.target_coords,
@@ -117,10 +121,14 @@ export function createFestivalStore(): FestivalStoreApi {
       }),
       {
         name: "bonti_festival_state",
+        version: 2,
         storage: createJSONStorage(() => cookieStorage),
+        // Do not persist maria/friends so their coordinates always come from
+        // the fresh seed on reload. Older sessions wrote teleported pins
+        // into the cookie via the previous applyGroupConverge behavior,
+        // which caused the "everyone snaps to the meeting marker on
+        // refresh" glitch. The version bump invalidates that legacy state.
         partialize: (s) => ({
-          maria: s.maria,
-          friends: s.friends,
           pings: s.pings,
           group_meeting: s.group_meeting,
           // silentPingIds intentionally excluded — runtime-only. After a
