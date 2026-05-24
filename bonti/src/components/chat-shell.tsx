@@ -6,19 +6,24 @@ import { ChatInput } from "@/components/chat-input";
 import { BontiAvatar } from "@/components/bonti-avatar";
 import type { Mode } from "@/types/chat";
 
+// These chips seed an empty chat. They have to work as plain Q&A — the
+// on-site location-aware queries ("Where's the closest beer?") live in
+// the Compass surface, not here. Keep these generic enough that the
+// chatbot can answer them without a map context.
 const PRE_TICKET_PROMPTS = [
   "First time at the Castle — help me plan",
-  "I'm coming from Bucharest with 3 friends",
-  "How much money do I need?",
-  "I don't know the lineup",
-  "Convince my friends",
+  "How much cash do I need for 4 days?",
+  "What's an angel shot?",
+  "Is camping or hotel a better call?",
+  "How do I get there from Cluj airport?",
 ];
 
 const IN_FESTIVAL_PROMPTS = [
-  "Where's the closest beer?",
-  "Where's a short bathroom line?",
-  "I want somewhere quiet for 15 min",
-  "What should I see next?",
+  "What's an angel shot?",
+  "Cashless top-up — how does it work?",
+  "Re-entry rules at the gate?",
+  "Lost phone — what do I do?",
+  "Are there lockers on site?",
 ];
 
 function EmptyState({
