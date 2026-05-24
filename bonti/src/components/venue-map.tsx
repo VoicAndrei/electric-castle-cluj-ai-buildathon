@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { TransformWrapper, TransformComponent, useControls } from "react-zoom-pan-pinch";
 
 type Pin = {
   id: string;
@@ -19,10 +20,27 @@ type Props = {
   className?: string;
 };
 
+function ZoomControls() {
+  const { zoomIn, zoomOut, resetTransform } = useControls();
+  const btn =
+    "size-8 bg-bonti-toolbar/85 text-white font-sofia text-base leading-none rounded-full flex items-center justify-center shadow active:scale-95";
+  return (
+    <div className="absolute top-2 right-2 z-10 flex flex-col gap-1.5">
+      <button type="button" aria-label="Zoom in"  onClick={() => zoomIn()}  className={btn}>+</button>
+      <button type="button" aria-label="Zoom out" onClick={() => zoomOut()} className={btn}>−</button>
+      <button type="button" aria-label="Reset zoom" onClick={() => resetTransform()} className={`${btn} text-xs`}>⤾</button>
+    </div>
+  );
+}
+
 /**
  * The EC11 festival map (the real isometric illustration EC publishes each
  * year) is the backdrop. Friend pins float on top at percent coordinates
  * derived from the 1000-unit positions stored in festival-state.
+ *
+ * Wrapped in react-zoom-pan-pinch so pinch (touch), scroll-wheel (desktop),
+ * and drag-to-pan all work. Pin DOM lives inside the transformed element so
+ * pins move + scale with the map.
  */
 export function VenueMap({ pins = [], className }: Props) {
   return (
@@ -34,39 +52,61 @@ export function VenueMap({ pins = [], className }: Props) {
         .filter(Boolean)
         .join(" ")}
       style={{ aspectRatio: "5236 / 3071" }}
-      role="img"
-      aria-label="Electric Castle venue map with friend positions"
     >
-      <Image
-        src="/ec-map.png"
-        alt=""
-        fill
-        priority
-        sizes="(max-width: 480px) 100vw, 480px"
-        className="object-cover select-none pointer-events-none"
-        draggable={false}
-      />
-
-      {pins.map((p) => {
-        const leftPct = p.coords.x / 10;
-        const topPct = p.coords.y / 10;
-        const size = p.size ?? 28;
-        return (
+      <TransformWrapper
+        initialScale={1}
+        minScale={1}
+        maxScale={5}
+        wheel={{ step: 0.2 }}
+        doubleClick={{ mode: "toggle", step: 1.5 }}
+        panning={{ velocityDisabled: false }}
+      >
+        <ZoomControls />
+        <TransformComponent
+          wrapperClass="!w-full !h-full"
+          contentClass="!w-full !h-full"
+        >
           <div
-            key={p.id}
-            className="absolute -translate-x-1/2 -translate-y-1/2 rounded-full shadow-[0_0_0_3px_white,0_2px_6px_rgba(0,0,0,0.4)] flex items-center justify-center font-sofia text-xs font-bold text-white transition-[left,top] duration-[1.5s] ease-in-out"
-            style={{
-              left: `${leftPct}%`,
-              top: `${topPct}%`,
-              width: size,
-              height: size,
-              backgroundColor: p.color ?? "#0A0A0A",
-            }}
+            className="relative w-full h-full"
+            role="img"
+            aria-label="Electric Castle venue map with friend positions"
           >
-            {p.label}
+            <Image
+              src="/ec-map.png"
+              alt=""
+              fill
+              priority
+              sizes="(max-width: 480px) 100vw, 480px"
+              className="object-cover select-none pointer-events-none"
+              draggable={false}
+            />
+            {pins.map((p) => {
+              const leftPct = p.coords.x / 10;
+              const topPct = p.coords.y / 10;
+              const size = p.size ?? 28;
+              return (
+                <div
+                  key={p.id}
+                  className="absolute -translate-x-1/2 -translate-y-1/2 rounded-full shadow-[0_0_0_3px_white,0_2px_6px_rgba(0,0,0,0.4)] flex items-center justify-center font-sofia text-xs font-bold text-white transition-[left,top] duration-[1.5s] ease-in-out"
+                  style={{
+                    left: `${leftPct}%`,
+                    top: `${topPct}%`,
+                    width: size,
+                    height: size,
+                    backgroundColor: p.color ?? "#0A0A0A",
+                  }}
+                >
+                  {p.label}
+                </div>
+              );
+            })}
           </div>
-        );
-      })}
+        </TransformComponent>
+      </TransformWrapper>
+
+      <p className="absolute bottom-2 left-1/2 -translate-x-1/2 text-[10px] font-roboto text-white/80 bg-black/40 px-2 py-0.5 rounded-full pointer-events-none">
+        Pinch or scroll to zoom · drag to pan
+      </p>
     </div>
   );
 }
