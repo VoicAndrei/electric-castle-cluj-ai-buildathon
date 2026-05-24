@@ -4,7 +4,9 @@ import { Suspense, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { AppHeader } from "@/components/app-header";
 import { CompassCard } from "@/components/compass-card";
+import { CompassRouteMap } from "@/components/compass-route-map";
 import { useFestivalStore } from "@/lib/festival/store";
+import { useDeviceHeading } from "@/hooks/use-device-heading";
 import { findVenueById } from "@/lib/festival/compass";
 import type { VenuePoint } from "@/data/venue";
 
@@ -38,6 +40,7 @@ function resolveDeepLink(targetId: string | null): CompassResult | null {
 function CompassInner() {
   const params = useSearchParams();
   const maria = useFestivalStore(s => s.maria);
+  const { heading } = useDeviceHeading();
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -129,6 +132,13 @@ function CompassInner() {
           reason={result.reason}
           line_state={result.line_state}
           bontiLine={result.bontiLine}
+        />
+      )}
+      {result && (
+        <CompassRouteMap
+          target={result.target}
+          from={maria.coords}
+          heading={heading}
         />
       )}
     </>
