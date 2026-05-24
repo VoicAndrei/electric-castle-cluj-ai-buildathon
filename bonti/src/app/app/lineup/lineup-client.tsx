@@ -96,37 +96,36 @@ export function LineupClient({ initial }: { initial: Row[] }) {
             </button>
           ))}
         </div>
-      </div>
-
-      <div className="mx-4 mt-3 flex items-center gap-2">
-        <input
-          type="search"
-          value={artistQuery}
-          onChange={(e) => setArtistQuery(e.target.value)}
-          placeholder="Filter artist…"
-          aria-label="Filter by artist name"
-          className="flex-1 min-w-0 bg-bonti-surface border border-black/10 rounded-lg px-3 py-2 font-roboto text-sm outline-none focus:border-bonti-red"
-        />
-        <select
-          value={stageFilter}
-          onChange={(e) => setStageFilter(e.target.value)}
-          aria-label="Filter by stage"
-          className="bg-bonti-surface border border-black/10 rounded-lg px-2 py-2 font-roboto text-sm outline-none focus:border-bonti-red"
-        >
-          <option value="all">All stages</option>
-          {stagesForDay.map(s => (
-            <option key={s} value={s}>{s}</option>
-          ))}
-        </select>
-        {filtersActive && (
-          <button
-            type="button"
-            onClick={() => { setStageFilter("all"); setArtistQuery(""); }}
-            className="text-xs font-roboto underline text-bonti-text/70 whitespace-nowrap"
+        <div className="px-4 pt-2 pb-3 flex items-center gap-2">
+          <input
+            type="search"
+            value={artistQuery}
+            onChange={(e) => setArtistQuery(e.target.value)}
+            placeholder="Filter artist…"
+            aria-label="Filter by artist name"
+            className="flex-1 min-w-0 bg-bonti-surface border border-black/10 rounded-lg px-3 py-2 font-roboto text-sm outline-none focus:border-bonti-red"
+          />
+          <select
+            value={stageFilter}
+            onChange={(e) => setStageFilter(e.target.value)}
+            aria-label="Filter by stage"
+            className="bg-bonti-surface border border-black/10 rounded-lg px-2 py-2 font-roboto text-sm outline-none focus:border-bonti-red"
           >
-            Clear
-          </button>
-        )}
+            <option value="all">All stages</option>
+            {stagesForDay.map(s => (
+              <option key={s} value={s}>{s}</option>
+            ))}
+          </select>
+          {filtersActive && (
+            <button
+              type="button"
+              onClick={() => { setStageFilter("all"); setArtistQuery(""); }}
+              className="text-xs font-roboto underline text-bonti-text/70 whitespace-nowrap"
+            >
+              Clear
+            </button>
+          )}
+        </div>
       </div>
 
       {!match && !filtersActive && (
