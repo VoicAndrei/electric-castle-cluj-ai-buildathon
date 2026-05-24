@@ -4,7 +4,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useEventLogger } from "@/hooks/use-event-logger";
-import type { LineupEntry } from "@/data/lineup";
+import type { LineupEntry } from "@/data/lineup-static";
 
 export function ArtistSheet({ entry, onClose }: { entry: LineupEntry | null; onClose: () => void }) {
   const log = useEventLogger();

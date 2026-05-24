@@ -5,7 +5,7 @@ import Link from "next/link";
 import { AppHeader } from "@/components/app-header";
 import { LineupRow } from "@/components/lineup-row";
 import { ArtistSheet } from "@/components/artist-sheet";
-import { LINEUP, type LineupEntry } from "@/data/lineup";
+import { LINEUP, type LineupEntry } from "@/data/lineup-static";
 import { createClient } from "@/lib/supabase/client";
 import { useEventLogger } from "@/hooks/use-event-logger";
 

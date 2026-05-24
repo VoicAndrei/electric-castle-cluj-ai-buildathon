@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { BontiAvatar } from "@/components/bonti-avatar";
 import { DEMO_NOW } from "@/data/festival-state";
-import { LINEUP } from "@/data/lineup";
+import { LINEUP } from "@/data/lineup-static";
 import { createClient } from "@/lib/supabase/client";
 
 function formatClock(d: Date): string {

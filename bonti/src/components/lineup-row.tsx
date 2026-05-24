@@ -1,4 +1,4 @@
-import type { LineupEntry } from "@/data/lineup";
+import type { LineupEntry } from "@/data/lineup-static";
 
 type Overlay = "pick" | "skip" | null;
 
