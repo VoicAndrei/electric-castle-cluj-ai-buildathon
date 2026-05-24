@@ -9,12 +9,16 @@ function formatTime(iso: string): string {
 export function PingRow({ ping }: { ping: StoredPing }) {
   const row = (
     <div className={[
-      "flex items-start gap-3 px-4 py-3 border-b border-black/5",
+      "flex items-start gap-3 px-4 py-3 border-b",
+      ping.urgent ? "border-bonti-red/40" : "border-black/5",
       ping.read ? "opacity-70" : "bg-bonti-surface",
     ].join(" ")}>
       <BontiAvatar size="sm" animated={false} />
       <div className="flex-1 min-w-0">
-        <p className="text-bonti-text font-sofia uppercase text-xs tracking-wide truncate">
+        <p className={[
+          "font-sofia uppercase text-xs tracking-wide truncate",
+          ping.urgent ? "text-bonti-red" : "text-bonti-text",
+        ].join(" ")}>
           {ping.title}
         </p>
         <p className="text-bonti-text font-roboto text-sm truncate">{ping.body}</p>

@@ -8,8 +8,9 @@ import type { StoredPing } from "@/lib/festival/store";
 
 export function PingToast({ ping, onDismiss }: { ping: StoredPing | null; onDismiss: () => void }) {
   const [shown, setShown] = useState(false);
-  // Track the last ping id we activated for. Updating state during render based
-  // on prop changes is the official React idiom and avoids set-state-in-effect.
+  // Track the last ping id we activated for. Updating state during render
+  // based on prop changes is the official React idiom and avoids
+  // set-state-in-effect.
   const [lastPingId, setLastPingId] = useState<string | null>(null);
 
   if (ping && ping.id !== lastPingId) {
@@ -17,20 +18,21 @@ export function PingToast({ ping, onDismiss }: { ping: StoredPing | null; onDism
     setShown(true);
   }
 
-  // Auto-dismiss timer.
+  // Auto-dismiss timer — disabled for urgent broadcasts.
   useEffect(() => {
-    if (!ping || !shown) return;
+    if (!ping || !shown || ping.urgent) return;
     const t = setTimeout(() => setShown(false), 6_000);
     return () => clearTimeout(t);
   }, [ping, shown]);
 
-  // After exit animation completes, clear the ping.
   useEffect(() => {
     if (!shown && ping) {
       const t = setTimeout(onDismiss, 300);
       return () => clearTimeout(t);
     }
   }, [shown, ping, onDismiss]);
+
+  const urgentClass = ping?.urgent ? "ring-2 ring-bonti-red" : "";
 
   return (
     <AnimatePresence>
@@ -40,7 +42,7 @@ export function PingToast({ ping, onDismiss }: { ping: StoredPing | null; onDism
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: -80, opacity: 0 }}
           transition={{ type: "spring", stiffness: 300, damping: 28 }}
-          className="fixed inset-x-3 top-3 z-50 mx-auto max-w-[460px] bg-bonti-toolbar text-white rounded-xl shadow-lg px-3 py-2 flex items-center gap-3"
+          className={`fixed inset-x-3 top-3 z-50 mx-auto max-w-[460px] bg-bonti-toolbar text-white rounded-xl shadow-lg px-3 py-2 flex items-center gap-3 ${urgentClass}`}
         >
           <BontiAvatar size="sm" animated />
           <Link href={ping.deeplink ?? "/app/notifications"} className="flex-1 min-w-0">
