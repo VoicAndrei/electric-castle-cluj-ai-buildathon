@@ -37,6 +37,18 @@ export function useBroadcastsRealtime({ lang }: { lang: "en" | "ro" }): void {
         { event: "INSERT", schema: "public", table: "broadcasts" } as never,
         (payload: { new: BroadcastRow }) => {
           appendPing(broadcastToPing(payload.new, lang));
+          const latencyMs = Date.now() - new Date(payload.new.sent_at).getTime();
+          const body = JSON.stringify({
+            type: "broadcast_received",
+            payload: { broadcast_id: payload.new.id, latency_ms: Math.max(0, latencyMs) },
+          });
+          try {
+            if (navigator.sendBeacon) {
+              navigator.sendBeacon("/api/events", new Blob([body], { type: "application/json" }));
+            } else {
+              void fetch("/api/events", { method: "POST", body, headers: { "content-type": "application/json" }, keepalive: true });
+            }
+          } catch { /* never block UX */ }
         },
       )
       .subscribe();

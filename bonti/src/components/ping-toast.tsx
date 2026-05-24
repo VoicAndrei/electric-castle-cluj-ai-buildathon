@@ -4,9 +4,11 @@ import { AnimatePresence, motion } from "framer-motion";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { BontiAvatar } from "@/components/bonti-avatar";
+import { useEventLogger } from "@/hooks/use-event-logger";
 import type { StoredPing } from "@/lib/festival/store";
 
 export function PingToast({ ping, onDismiss }: { ping: StoredPing | null; onDismiss: () => void }) {
+  const log = useEventLogger();
   const [shown, setShown] = useState(false);
   // Track the last ping id we activated for. Updating state during render
   // based on prop changes is the official React idiom and avoids
@@ -16,6 +18,7 @@ export function PingToast({ ping, onDismiss }: { ping: StoredPing | null; onDism
   if (ping && ping.id !== lastPingId) {
     setLastPingId(ping.id);
     setShown(true);
+    log("ping_shown", { ping_id: ping.id, urgent: !!ping.urgent });
   }
 
   // Auto-dismiss timer — disabled for urgent broadcasts.
@@ -45,7 +48,11 @@ export function PingToast({ ping, onDismiss }: { ping: StoredPing | null; onDism
           className={`fixed inset-x-3 top-3 z-50 mx-auto max-w-[460px] bg-bonti-toolbar text-white rounded-xl shadow-lg px-3 py-2 flex items-center gap-3 ${urgentClass}`}
         >
           <BontiAvatar size="sm" animated />
-          <Link href={ping.deeplink ?? "/app/notifications"} className="flex-1 min-w-0">
+          <Link
+            href={ping.deeplink ?? "/app/notifications"}
+            onClick={() => log("ping_tapped", { ping_id: ping!.id, deeplink: ping!.deeplink ?? null })}
+            className="flex-1 min-w-0"
+          >
             <p className="font-sofia uppercase text-xs tracking-wide truncate">{ping.title}</p>
             <p className="font-roboto text-sm truncate opacity-90">{ping.body}</p>
           </Link>

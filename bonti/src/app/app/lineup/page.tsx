@@ -7,6 +7,7 @@ import { LineupRow } from "@/components/lineup-row";
 import { ArtistSheet } from "@/components/artist-sheet";
 import { LINEUP, type LineupEntry } from "@/data/lineup";
 import { createClient } from "@/lib/supabase/client";
+import { useEventLogger } from "@/hooks/use-event-logger";
 
 const DAYS: LineupEntry["day"][] = ["Friday", "Saturday", "Sunday"];
 
@@ -19,6 +20,7 @@ export default function LineupPage() {
   const [day, setDay] = useState<LineupEntry["day"]>("Saturday");
   const [match, setMatch] = useState<MatchOutput | null>(null);
   const [openEntry, setOpenEntry] = useState<LineupEntry | null>(null);
+  const log = useEventLogger();
 
   useEffect(() => {
     const sb = createClient();
@@ -31,6 +33,11 @@ export default function LineupPage() {
         if (data?.output) setMatch(data.output as MatchOutput);
       });
   }, []);
+
+  useEffect(() => {
+    log("lineup_view", { day, language: "en", has_match: !!match });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [day]);
 
   const overlayFor = (entry: LineupEntry): "pick" | "skip" | null => {
     if (!match) return null;

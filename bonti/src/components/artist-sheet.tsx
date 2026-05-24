@@ -3,9 +3,11 @@
 import { AnimatePresence, motion } from "framer-motion";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { useEventLogger } from "@/hooks/use-event-logger";
 import type { LineupEntry } from "@/data/lineup";
 
 export function ArtistSheet({ entry, onClose }: { entry: LineupEntry | null; onClose: () => void }) {
+  const log = useEventLogger();
   const [blurb, setBlurb] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   // Track the last artist we kicked off a fetch for. Updating state during
@@ -43,6 +45,16 @@ export function ArtistSheet({ entry, onClose }: { entry: LineupEntry | null; onC
       });
     return () => controller.abort();
   }, [entry]);
+
+  useEffect(() => {
+    if (!entry) return;
+    log("artist_blurb_view", {
+      artist_name: entry.artist,
+      language: "en",
+      source: "live",
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [entry?.artist]);
 
   return (
     <AnimatePresence>

@@ -1,17 +1,24 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { AppHeader } from "@/components/app-header";
 import { DensityBar } from "@/components/density-bar";
 import { VENUE, QUEUE_SNAPSHOTS } from "@/data/venue";
 import { useFestivalStore } from "@/lib/festival/store";
 import { distanceMeters } from "@/lib/festival/compass";
+import { useEventLogger } from "@/hooks/use-event-logger";
 
 export default function WaitTimesPage() {
   const maria = useFestivalStore(s => s.maria);
   const [snapshotIdx, setSnapshotIdx] = useState(0);
   const [sortBy, setSortBy] = useState<"wait" | "distance">("wait");
   const [refreshing, setRefreshing] = useState(false);
+  const log = useEventLogger();
+
+  useEffect(() => {
+    log("wait_times_view", { sort: sortBy });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sortBy]);
 
   const snapshot = QUEUE_SNAPSHOTS[snapshotIdx];
 
