@@ -55,9 +55,41 @@ function EmptyState({
   );
 }
 
-export function ChatShell({ mode = "pre_ticket" }: { mode?: Mode }) {
+type Layout = "inline" | "fill";
+
+/**
+ * `inline` — chat flows inline below other content (used in /app where
+ *   ChatShell sits under the tile grid).
+ * `fill` — fills the parent flex column, messages scroll INSIDE, the
+ *   input is locked to the bottom of the visible viewport. Used on /
+ *   where the chat *is* the page.
+ */
+export function ChatShell({
+  mode = "pre_ticket",
+  layout = "inline",
+}: {
+  mode?: Mode;
+  layout?: Layout;
+}) {
   const { messages, loading, send } = useChat({ mode });
   const showEmpty = messages.length === 0 && !loading;
+
+  if (layout === "fill") {
+    return (
+      <section className="flex-1 min-h-0 flex flex-col w-full max-w-2xl mx-auto">
+        <div className="flex-1 min-h-0 overflow-y-auto px-4 pt-4 pb-2">
+          {showEmpty ? (
+            <EmptyState mode={mode} onPick={send} />
+          ) : (
+            <MessageList messages={messages} loading={loading} />
+          )}
+        </div>
+        <div className="px-4 pb-4 pt-2 bg-bonti-bg border-t border-black/5">
+          <ChatInput onSubmit={(t) => send(t)} disabled={loading} />
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="flex-1 flex flex-col gap-4 px-4 py-4 w-full max-w-2xl mx-auto">
