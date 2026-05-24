@@ -127,7 +127,20 @@ export default function GroupPage() {
 
       <div className="px-4 pt-4">
         {!groupMeeting ? (
-          pendingManual ? (
+          <>
+            <div className="mb-2">
+              <span
+                className={[
+                  "inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-sofia uppercase tracking-wide text-[10px]",
+                  pendingManual
+                    ? "bg-blue-100 text-blue-800"
+                    : "bg-bonti-red/10 text-bonti-red",
+                ].join(" ")}
+              >
+                {pendingManual ? "🖐️ Manual pick" : "🤖 Bonți will choose"}
+              </span>
+            </div>
+            {pendingManual ? (
             <div className="flex gap-2">
               <button
                 type="button"
@@ -156,7 +169,8 @@ export default function GroupPage() {
             >
               {loading ? "Bonți's thinking…" : "Let's meet up"}
             </button>
-          )
+            )}
+          </>
         ) : (
           <div className="bg-bonti-surface border border-black/5 rounded-xl p-4">
             <div className="flex items-center justify-between gap-2">
