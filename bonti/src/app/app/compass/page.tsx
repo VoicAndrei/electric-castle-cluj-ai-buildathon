@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { AppHeader } from "@/components/app-header";
 import { CompassCard } from "@/components/compass-card";
 import { CompassRouteMap } from "@/components/compass-route-map";
+import { VenueMap } from "@/components/venue-map";
 import { useFestivalStore } from "@/lib/festival/store";
 import { useDeviceHeading } from "@/hooks/use-device-heading";
 import { findVenueById } from "@/lib/festival/compass";
@@ -134,12 +135,20 @@ function CompassInner() {
           bontiLine={result.bontiLine}
         />
       )}
-      {result && (
+      {result ? (
         <CompassRouteMap
           target={result.target}
           from={maria.coords}
           heading={heading}
         />
+      ) : (
+        <div className="mx-4 mt-4">
+          <VenueMap
+            pins={[
+              { id: maria.id, coords: maria.coords, color: "#EB0000", label: maria.name[0] },
+            ]}
+          />
+        </div>
       )}
     </>
   );

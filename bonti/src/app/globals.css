@@ -220,8 +220,8 @@ h1, h2, h3, h4, h5 {
 }
 
 @keyframes route-pulse {
-  0%, 100% { transform: translate(-50%, -50%) scale(1);   opacity: 1;   }
-  50%      { transform: translate(-50%, -50%) scale(1.15); opacity: 0.85; }
+  0%, 100% { transform: scale(1);    opacity: 1;    }
+  50%      { transform: scale(1.15); opacity: 0.85; }
 }
 .animate-route-pulse {
   animation: route-pulse 2s ease-in-out infinite;

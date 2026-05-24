@@ -1,8 +1,13 @@
 "use client";
 
-import type { ReactNode } from "react";
+import { useRef, type PointerEvent, type ReactNode } from "react";
 import Image from "next/image";
-import { TransformWrapper, TransformComponent, useControls } from "react-zoom-pan-pinch";
+import {
+  TransformWrapper,
+  TransformComponent,
+  useControls,
+  useTransformComponent,
+} from "react-zoom-pan-pinch";
 
 type Pin = {
   id: string;
@@ -24,8 +29,45 @@ type Props = {
    * with the map. Sits *above* the default pins in z-order.
    */
   overlay?: ReactNode;
+  /**
+   * Called when the user taps the map (not a drag). Coords are in the same
+   * 0-1000 grid used by pins. The handler is wired to a pointer interaction
+   * that ignores movement above a small threshold, so pan gestures don't
+   * accidentally drop a pin.
+   */
+  onMapClick?: (coords: { x: number; y: number }) => void;
   className?: string;
 };
+
+function Pins({ pins }: { pins: Pin[] }) {
+  // Counter-scale so pins keep a constant visual size as the map zooms.
+  // Without this they grow with the transformed canvas and feel oversized.
+  const scale = useTransformComponent(({ state }) => state.scale);
+  return (
+    <>
+      {pins.map((p) => {
+        const size = p.size ?? 28;
+        return (
+          <div
+            key={p.id}
+            className="absolute rounded-full shadow-[0_0_0_3px_white,0_2px_6px_rgba(0,0,0,0.4)] flex items-center justify-center font-sofia text-xs font-bold text-white transition-[left,top] duration-[1.5s] ease-in-out"
+            style={{
+              left: `${p.coords.x / 10}%`,
+              top: `${p.coords.y / 10}%`,
+              width: size,
+              height: size,
+              backgroundColor: p.color ?? "#0A0A0A",
+              transform: `translate(-50%, -50%) scale(${1 / scale})`,
+              transformOrigin: "center",
+            }}
+          >
+            {p.label}
+          </div>
+        );
+      })}
+    </>
+  );
+}
 
 function ZoomControls() {
   const { zoomIn, zoomOut, resetTransform } = useControls();
@@ -49,7 +91,34 @@ function ZoomControls() {
  * and drag-to-pan all work. Pin DOM lives inside the transformed element so
  * pins move + scale with the map.
  */
-export function VenueMap({ pins = [], overlay, className }: Props) {
+const TAP_PIXEL_THRESHOLD = 6;
+
+export function VenueMap({ pins = [], overlay, onMapClick, className }: Props) {
+  // Track pointerdown coords to distinguish a tap from a pan-drag. A pan
+  // moves the pointer; a tap stays within TAP_PIXEL_THRESHOLD. We only fire
+  // onMapClick for taps so dragging the map never drops a pin.
+  const downRef = useRef<{ x: number; y: number } | null>(null);
+
+  const handlePointerDown = (e: PointerEvent<HTMLDivElement>) => {
+    downRef.current = { x: e.clientX, y: e.clientY };
+  };
+
+  const handlePointerUp = (e: PointerEvent<HTMLDivElement>) => {
+    const start = downRef.current;
+    downRef.current = null;
+    if (!start || !onMapClick) return;
+    const dx = e.clientX - start.x;
+    const dy = e.clientY - start.y;
+    if (Math.hypot(dx, dy) > TAP_PIXEL_THRESHOLD) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    if (rect.width === 0 || rect.height === 0) return;
+    const gx = ((e.clientX - rect.left) / rect.width) * 1000;
+    const gy = ((e.clientY - rect.top) / rect.height) * 1000;
+    const x = Math.max(0, Math.min(1000, gx));
+    const y = Math.max(0, Math.min(1000, gy));
+    onMapClick({ x, y });
+  };
+
   return (
     <div
       className={[
@@ -77,6 +146,9 @@ export function VenueMap({ pins = [], overlay, className }: Props) {
             className="relative w-full h-full"
             role="img"
             aria-label="Electric Castle venue map with friend positions"
+            onPointerDown={onMapClick ? handlePointerDown : undefined}
+            onPointerUp={onMapClick ? handlePointerUp : undefined}
+            style={onMapClick ? { cursor: "crosshair" } : undefined}
           >
             <Image
               src="/ec-map.png"
@@ -87,26 +159,7 @@ export function VenueMap({ pins = [], overlay, className }: Props) {
               className="object-cover select-none pointer-events-none"
               draggable={false}
             />
-            {pins.map((p) => {
-              const leftPct = p.coords.x / 10;
-              const topPct = p.coords.y / 10;
-              const size = p.size ?? 28;
-              return (
-                <div
-                  key={p.id}
-                  className="absolute -translate-x-1/2 -translate-y-1/2 rounded-full shadow-[0_0_0_3px_white,0_2px_6px_rgba(0,0,0,0.4)] flex items-center justify-center font-sofia text-xs font-bold text-white transition-[left,top] duration-[1.5s] ease-in-out"
-                  style={{
-                    left: `${leftPct}%`,
-                    top: `${topPct}%`,
-                    width: size,
-                    height: size,
-                    backgroundColor: p.color ?? "#0A0A0A",
-                  }}
-                >
-                  {p.label}
-                </div>
-              );
-            })}
+            <Pins pins={pins} />
             {overlay}
           </div>
         </TransformComponent>

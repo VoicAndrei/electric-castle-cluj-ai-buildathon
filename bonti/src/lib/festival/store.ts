@@ -13,15 +13,25 @@ export type GroupConvergeResult = {
   target_coords: { x: number; y: number };
 };
 
+export type GroupMeeting = {
+  point_id?: string;
+  coords: { x: number; y: number };
+  eta_min?: number;
+  reason?: string;
+  source: "bonti" | "manual";
+};
+
 export type FestivalState = {
   maria: Persona;
   friends: Persona[];
   pings: StoredPing[];
   silentPingIds: string[];
-  group_meeting?: { point_id: string; eta_min: number; reason: string };
+  group_meeting?: GroupMeeting;
 
   appendPing: (p: SeededPing, opts?: { silent?: boolean }) => void;
   applyGroupConverge: (r: GroupConvergeResult) => void;
+  setManualMeeting: (coords: { x: number; y: number }) => void;
+  clearMeeting: () => void;
   markAllPingsRead: () => void;
   reset: () => void;
 };
@@ -84,8 +94,21 @@ export function createFestivalStore(): FestivalStoreApi {
           set((state) => ({
             maria: { ...state.maria, coords: r.target_coords },
             friends: state.friends.map(f => ({ ...f, coords: r.target_coords })),
-            group_meeting: { point_id: r.meeting_point_id, eta_min: r.eta_min, reason: r.reason },
+            group_meeting: {
+              point_id: r.meeting_point_id,
+              coords: r.target_coords,
+              eta_min: r.eta_min,
+              reason: r.reason,
+              source: "bonti",
+            },
           })),
+
+        setManualMeeting: (coords) =>
+          set(() => ({
+            group_meeting: { coords, source: "manual" },
+          })),
+
+        clearMeeting: () => set(() => ({ group_meeting: undefined })),
 
         markAllPingsRead: () =>
           set((state) => ({ pings: state.pings.map(p => ({ ...p, read: true })) })),
