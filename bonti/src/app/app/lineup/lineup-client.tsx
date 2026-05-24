@@ -22,6 +22,7 @@ export function LineupClient({ initial }: { initial: Row[] }) {
   const [openRow, setOpenRow] = useState<Row | null>(null);
   const [stageFilter, setStageFilter] = useState<string>("all");
   const [artistQuery, setArtistQuery] = useState("");
+  const [matchesOnly, setMatchesOnly] = useState(false);
   const log = useEventLogger();
 
   useEffect(() => {
@@ -65,16 +66,27 @@ export function LineupClient({ initial }: { initial: Row[] }) {
   }, [stageFilter, stagesForDay]);
 
   const trimmedArtist = artistQuery.trim().toLowerCase();
-  const filtersActive = stageFilter !== "all" || trimmedArtist.length > 0;
+  // matchesOnly is only meaningful when a Bonți match exists. If the user
+  // toggled it on, then ran /match again returning an empty picks array,
+  // the toggle would silently hide everything — force-disable in that case.
+  const pickSet = useMemo(() => {
+    const s = new Set<string>();
+    for (const p of match?.picks ?? []) s.add(p.artist.toLowerCase());
+    return s;
+  }, [match]);
+  const matchesOnlyEffective = matchesOnly && pickSet.size > 0;
+  const filtersActive =
+    stageFilter !== "all" || trimmedArtist.length > 0 || matchesOnlyEffective;
 
   const filtered = useMemo(() => {
     return rows.filter(r => {
       if (r.day !== day) return false;
       if (stageFilter !== "all" && r.stage !== stageFilter) return false;
       if (trimmedArtist && !r.artist_name.toLowerCase().includes(trimmedArtist)) return false;
+      if (matchesOnlyEffective && !pickSet.has(r.artist_name.toLowerCase())) return false;
       return true;
     });
-  }, [rows, day, stageFilter, trimmedArtist]);
+  }, [rows, day, stageFilter, trimmedArtist, matchesOnlyEffective, pickSet]);
 
   return (
     <>
@@ -118,13 +130,34 @@ export function LineupClient({ initial }: { initial: Row[] }) {
           {filtersActive && (
             <button
               type="button"
-              onClick={() => { setStageFilter("all"); setArtistQuery(""); }}
+              onClick={() => {
+                setStageFilter("all");
+                setArtistQuery("");
+                setMatchesOnly(false);
+              }}
               className="text-xs font-roboto underline text-bonti-text/70 whitespace-nowrap"
             >
               Clear
             </button>
           )}
         </div>
+        {match && pickSet.size > 0 && (
+          <div className="px-4 pb-3 -mt-1 flex">
+            <button
+              type="button"
+              onClick={() => setMatchesOnly(v => !v)}
+              aria-pressed={matchesOnlyEffective}
+              className={[
+                "rounded-full px-3 py-1 font-sofia uppercase tracking-wide text-[11px] border",
+                matchesOnlyEffective
+                  ? "bg-green-100 border-green-300 text-green-800"
+                  : "bg-bonti-surface border-black/10 text-bonti-text",
+              ].join(" ")}
+            >
+              🟢 Matches only {matchesOnlyEffective ? "· on" : ""}
+            </button>
+          </div>
+        )}
       </div>
 
       {!match && !filtersActive && (
