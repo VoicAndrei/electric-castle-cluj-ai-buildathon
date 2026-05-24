@@ -47,8 +47,12 @@ export default function AppHome() {
   }
 
   if (!onSite) {
+    // Flex column sized to the viewport minus the tabbar (pb-20 on the
+    // <main>) so ChatShell's "fill" layout can pin the input to the
+    // bottom of the visible area. ChatShell uses flex-1 + min-h-0 so the
+    // message list scrolls between the header/CTA and the input.
     return (
-      <>
+      <div className="flex flex-col min-h-[calc(100dvh-80px)]">
         <AppHeader title="Bonți" />
         <div className="px-4 pt-3">
           <button
@@ -62,8 +66,8 @@ export default function AppHome() {
             Switches Bonți to on-site mode — pings, live picks, venue navigation.
           </p>
         </div>
-        <ChatShell mode="pre_ticket" layout="inline" />
-      </>
+        <ChatShell mode="pre_ticket" layout="fill" />
+      </div>
     );
   }
 
