@@ -10,6 +10,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         <nav className="flex gap-4 text-xs font-sofia uppercase tracking-wide">
           <Link href="/admin/broadcasts" className="text-white/70 hover:text-white">Broadcasts</Link>
           <Link href="/admin/lineup" className="text-white/70 hover:text-white">Lineup</Link>
+          <Link href="/admin/insights" className="text-white/70 hover:text-white">Insights</Link>
         </nav>
       </header>
       <main className="flex-1 mx-auto w-full max-w-2xl px-4 py-6">{children}</main>
