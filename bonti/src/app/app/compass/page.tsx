@@ -12,7 +12,7 @@ import { findVenueById } from "@/lib/festival/compass";
 import type { VenuePoint } from "@/data/venue";
 
 const CHIPS = [
-  { label: "🍺 Beer",     query: "where is the closest beer" },
+  { label: "🍺 Drinks",   query: "where is the closest spot for drinks" },
   { label: "🚻 Bathroom", query: "where is the closest bathroom with a short line" },
   { label: "🍕 Food",     query: "where can I get food quickly" },
   { label: "🌿 Quiet",    query: "I want somewhere quiet for 15 minutes" },
